@@ -1,0 +1,4 @@
+lab_prefix                  = "RUN_SETUP_FIRST"
+aws_region                  = "eu-west-1"
+localstack_endpoint         = "http://localhost:4566"
+ec2_endpoint                = "http://localhost:4576"

@@ -1,0 +1,13 @@
+direction,source,destination,from_port,to_port,protocol,source_selector,description,enabled
+ingress,-,edge,80,80,tcp,dmz_net,Browser traffic from the public segment,true
+ingress,-,edge,443,443,tcp,dmz_net,Encrypted browser traffic from the public segment,true
+ingress,edge,records,5432,5432,tcp,,Application queries to the records tier,true
+ingress,edge,control,8082,8082,tcp,,Edge health events to control,true
+ingress,records,control,8082,8082,tcp,,Records health events to control,true
+ingress,control,edge,22,22,tcp,,Controlled maintenance of the edge tier,true
+ingress,-,control,22,22,tcp,admin_net,Administrative shell access,true
+egress,edge,control,443,443,tcp,,Outbound record that must be filtered,true
+ingress,-,edge,8443,8443,tcp,dmz_net,Disabled preview endpoint,false
+ingress,-,edge,,,-1,dmz_net,All protocols for controlled simulation,true
+ingress,-,edge,53,53,udp,dmz_net,UDP service discovery,true
+ingress,-,control,10000,10100,tcp,admin_net,Administrative diagnostics range,true

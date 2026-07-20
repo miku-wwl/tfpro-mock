@@ -1,0 +1,134 @@
+[
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 80,
+    "to_port": 80,
+    "protocol": "tcp",
+    "source_selector": "dmz_net",
+    "description": "Browser traffic from the public segment",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 443,
+    "to_port": 443,
+    "protocol": "tcp",
+    "source_selector": "dmz_net",
+    "description": "Encrypted browser traffic from the public segment",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "edge",
+    "destination": "records",
+    "from_port": 5432,
+    "to_port": 5432,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Application queries to the records tier",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "edge",
+    "destination": "control",
+    "from_port": 8082,
+    "to_port": 8082,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Edge health events to control",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "records",
+    "destination": "control",
+    "from_port": 8082,
+    "to_port": 8082,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Records health events to control",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "control",
+    "destination": "edge",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Controlled maintenance of the edge tier",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "control",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol": "tcp",
+    "source_selector": "admin_net",
+    "description": "Administrative shell access",
+    "enabled": true
+  },
+  {
+    "direction": "egress",
+    "source": "edge",
+    "destination": "control",
+    "from_port": 443,
+    "to_port": 443,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Outbound record that must be filtered",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 8443,
+    "to_port": 8443,
+    "protocol": "tcp",
+    "source_selector": "dmz_net",
+    "description": "Disabled preview endpoint",
+    "enabled": false
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": null,
+    "to_port": null,
+    "protocol": "-1",
+    "source_selector": "dmz_net",
+    "description": "All protocols for controlled simulation",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 53,
+    "to_port": 53,
+    "protocol": "udp",
+    "source_selector": "dmz_net",
+    "description": "UDP service discovery",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "control",
+    "from_port": 10000,
+    "to_port": 10100,
+    "protocol": "tcp",
+    "source_selector": "admin_net",
+    "description": "Administrative diagnostics range",
+    "enabled": true
+  }
+]
