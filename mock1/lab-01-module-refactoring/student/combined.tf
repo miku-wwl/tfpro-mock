@@ -44,8 +44,9 @@ resource "aws_security_group" "tiers" {
 resource "aws_vpc_security_group_ingress_rule" "links" {
   for_each = local.ingress_rules
 
-  security_group_id            = aws_security_group.tiers[each.value.target_group].id
-  referenced_security_group_id = each.value.source_group == null ? null : aws_security_group.tiers[each.value.source_group].id
+  security_group_id = aws_security_group.tiers[each.value.target_group].id
+  # LocalStack persists peer security-group references with its account prefix.
+  referenced_security_group_id = each.value.source_group == null ? null : "000000000000/${aws_security_group.tiers[each.value.source_group].id}"
   cidr_ipv4                    = each.value.source_group == null ? each.value.source_cidr : null
   from_port                    = each.value.port
   to_port                      = each.value.port

@@ -1,0 +1,21 @@
+PS student> terraform state list
+data.aws_iam_policy_document.runtime_assume
+aws_iam_instance_profile.runtime
+aws_iam_role.runtime
+aws_instance.nodes["gateway"]
+aws_instance.nodes["worker"]
+aws_s3_bucket.artifacts
+aws_s3_bucket.state_store
+aws_s3_object.manifest
+aws_security_group.tiers["edge"]
+aws_security_group.tiers["ops"]
+aws_security_group.tiers["service"]
+aws_subnet.zones[0]
+aws_subnet.zones[1]
+aws_vpc.harbor
+aws_vpc_security_group_ingress_rule.links["edge_from_ops"]
+aws_vpc_security_group_ingress_rule.links["edge_http"]
+aws_vpc_security_group_ingress_rule.links["ops_ssh"]
+aws_vpc_security_group_ingress_rule.links["service_from_edge"]
+aws_vpc_security_group_ingress_rule.links["service_from_ops"]
+random_pet.suffix
