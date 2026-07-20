@@ -1,0 +1,13 @@
+direction,source,destination,from_port,to_port,protocol,source_selector,description,enabled
+ingress,-,frontend,80,80,tcp,public,Public HTTP entry,true
+ingress,-,frontend,443,443,tcp,public,Public HTTPS entry,true
+ingress,frontend,datastore,5432,5432,tcp,,Frontend to PostgreSQL,true
+ingress,frontend,operations,8082,8082,tcp,,Frontend control channel,true
+ingress,datastore,operations,8082,8082,tcp,,Datastore control channel,true
+ingress,operations,frontend,22,22,tcp,,Operations SSH to frontend,true
+ingress,-,operations,22,22,tcp,administration,Administration subnet SSH,true
+egress,frontend,datastore,443,443,tcp,,Egress row must be ignored,true
+ingress,-,frontend,9000,9000,tcp,administration,Disabled diagnostic endpoint,false
+ingress,-,datastore,,,-1,administration,All protocols from administration,true
+ingress,-,operations,53,53,udp,public,Public UDP resolver probe,true
+ingress,operations,datastore,10000,10100,tcp,,Operations high-port range,true

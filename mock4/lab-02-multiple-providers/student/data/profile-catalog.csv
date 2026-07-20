@@ -1,0 +1,4 @@
+map_key,profile_name,role_name,role_arn,source_profile,region,output,enabled,session_ttl,module_targets,note
+compute,compute-operator,lab02-nimbus-compute,arn:aws:iam::000000000000:role/lab02-nimbus-compute,localstack-seed,us-east-1,json,true,3600,compute|storage,
+identity,identity-operator,lab02-nimbus-identity,arn:aws:iam::000000000000:role/lab02-nimbus-identity,localstack-seed,us-east-1,json,true,3600,identity,
+audit,readonly-auditor,lab02-nimbus-audit,arn:aws:iam::000000000000:role/lab02-nimbus-audit,localstack-seed,us-east-1,,true,,audit,

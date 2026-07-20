@@ -1,0 +1,21 @@
+[default]
+region = us-west-2
+output = text
+
+[profile compute]
+role_arn = arn:aws:iam::000000000000:role/lab02-nimbus-compute
+source_profile = seed-local
+region = us-east-1
+output = json
+
+[profile identity-operator]
+role_arn = arn:aws:iam::000000000000:role/lab02-nimbus-identity
+source_profile = seed-local
+region = us-east-1
+output = json
+
+[profile readonly-auditor]
+role_arn = arn:aws:iam::000000000000:role/lab02-nimbus-audit
+source_profile = seed-local
+region = us-east-1
+output = text

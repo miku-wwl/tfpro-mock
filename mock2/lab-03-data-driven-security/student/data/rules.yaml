@@ -1,0 +1,108 @@
+- direction: "ingress"
+  source: "-"
+  destination: "frontend"
+  from_port: 80
+  to_port: 80
+  protocol: "tcp"
+  source_selector: "public"
+  description: "Public web HTTP"
+  enabled: true
+- direction: "ingress"
+  source: "-"
+  destination: "frontend"
+  from_port: 443
+  to_port: 443
+  protocol: "tcp"
+  source_selector: "public"
+  description: "Public web HTTPS"
+  enabled: true
+- direction: "ingress"
+  source: "frontend"
+  destination: "datastore"
+  from_port: 5432
+  to_port: 5432
+  protocol: "tcp"
+  source_selector: ""
+  description: "Frontend to database"
+  enabled: true
+- direction: "ingress"
+  source: "frontend"
+  destination: "operations"
+  from_port: 8082
+  to_port: 8082
+  protocol: "tcp"
+  source_selector: ""
+  description: "Frontend telemetry TCP"
+  enabled: true
+- direction: "ingress"
+  source: "datastore"
+  destination: "operations"
+  from_port: 8082
+  to_port: 8082
+  protocol: "tcp"
+  source_selector: ""
+  description: "Datastore telemetry TCP"
+  enabled: true
+- direction: "ingress"
+  source: "operations"
+  destination: "frontend"
+  from_port: 22
+  to_port: 22
+  protocol: "tcp"
+  source_selector: ""
+  description: "Operations SSH to frontend"
+  enabled: true
+- direction: "ingress"
+  source: "-"
+  destination: "operations"
+  from_port: 22
+  to_port: 22
+  protocol: "tcp"
+  source_selector: "administration"
+  description: "Administration SSH"
+  enabled: true
+- direction: "egress"
+  source: "frontend"
+  destination: "datastore"
+  from_port: 443
+  to_port: 443
+  protocol: "tcp"
+  source_selector: ""
+  description: "Filtered egress example"
+  enabled: true
+- direction: "ingress"
+  source: "-"
+  destination: "frontend"
+  from_port: 9090
+  to_port: 9090
+  protocol: "tcp"
+  source_selector: "public"
+  description: "Disabled diagnostic port"
+  enabled: false
+- direction: "ingress"
+  source: "-"
+  destination: "frontend"
+  from_port: null
+  to_port: null
+  protocol: "-1"
+  source_selector: "public"
+  description: "All protocols from public test subnet"
+  enabled: true
+- direction: "ingress"
+  source: "frontend"
+  destination: "operations"
+  from_port: 8082
+  to_port: 8082
+  protocol: "udp"
+  source_selector: ""
+  description: "Frontend telemetry UDP"
+  enabled: true
+- direction: "ingress"
+  source: "-"
+  destination: "frontend"
+  from_port: 10000
+  to_port: 10100
+  protocol: "tcp"
+  source_selector: "administration"
+  description: "Administration application range"
+  enabled: true

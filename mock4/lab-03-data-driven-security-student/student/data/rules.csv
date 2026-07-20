@@ -1,0 +1,18 @@
+direction,source,destination,from_port,to_port,protocol,source_selector,description,enabled
+ingress,-,edge,80,80,tcp,public,Public web traffic,true
+ingress,-,edge,443,443,tcp,public,Public TLS traffic,true
+ingress,edge,ledger,5432,5432,tcp,,Application database traffic,true
+ingress,edge,control,8082,8082,tcp,,Edge telemetry to control,true
+ingress,ledger,control,8082,8082,tcp,,Ledger telemetry to control,true
+ingress,control,edge,22,22,tcp,,Control SSH to edge,true
+ingress,-,control,22,22,tcp,administration,Administrator SSH access,true
+egress,edge,-,443,443,tcp,public,Outbound update traffic,true
+ingress,-,ledger,6379,6379,tcp,administration,Disabled cache administration,false
+ingress,-,edge,,,-1,public,All protocols from public subnet,true
+ingress,-,control,53,53,udp,administration,Administrative DNS query,true
+ingress,edge,control,10000,10100,tcp,,Edge diagnostics range,true
+ingress,ledger,edge,8443,8443,tcp,,Ledger callback to edge,true
+ingress,control,ledger,8443,8443,tcp,,Control callback to ledger,true
+ingress,edge,ledger,5432,5432,udp,,UDP database health probe,true
+ingress,-,ledger,443,443,tcp,administration,Administrative ledger console,true
+ingress,-,edge,443,443,tcp,administration,Administrative edge console,true

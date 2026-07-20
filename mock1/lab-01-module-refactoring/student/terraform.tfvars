@@ -1,0 +1,5 @@
+aws_region              = "us-east-1"
+localstack_endpoint     = "http://localhost:4566"
+localstack_access_key   = "test"
+localstack_secret_key   = "test"
+ami_id                  = "ami-0f1e2d3c4b5a69788"

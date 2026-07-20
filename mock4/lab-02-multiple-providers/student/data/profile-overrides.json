@@ -1,0 +1,37 @@
+{
+  "records": [
+    {
+      "map_key": "compute",
+      "output": "json",
+      "enabled": true,
+      "session_ttl": 3600,
+      "module_targets": [
+        "compute"
+      ],
+      "note": null,
+      "priority": 20
+    },
+    {
+      "map_key": "compute",
+      "output": "json",
+      "enabled": true,
+      "session_ttl": 3600,
+      "module_targets": [
+        "storage"
+      ],
+      "note": null,
+      "priority": 21
+    },
+    {
+      "map_key": "audit",
+      "output": "text",
+      "enabled": true,
+      "session_ttl": 900,
+      "module_targets": [
+        "audit"
+      ],
+      "note": null,
+      "priority": 20
+    }
+  ]
+}

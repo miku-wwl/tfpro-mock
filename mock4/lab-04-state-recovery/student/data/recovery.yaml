@@ -1,0 +1,29 @@
+items:
+  - kind: iam_user
+    address_key: beta
+    remote_suffix: operator-beta
+    enabled: true
+    priority: 15
+    keep_remote: false
+    description: lower-priority YAML duplicate
+  - kind: iam_user
+    address_key: gamma
+    remote_suffix: operator-gamma
+    enabled: true
+    priority: 25
+    keep_remote: false
+    description: exact duplicate used for normalization
+  - kind: iam_user
+    address_key: gamma
+    remote_suffix: operator-gamma
+    enabled: true
+    priority: 25
+    keep_remote: false
+    description: exact duplicate used for normalization
+  - kind: object
+    address_key: retained
+    remote_suffix: null
+    enabled: true
+    priority: 5
+    keep_remote: true
+    description: release from state but keep remotely

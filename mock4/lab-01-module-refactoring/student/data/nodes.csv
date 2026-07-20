@@ -1,0 +1,3 @@
+key,subnet_key,instance_type,enabled,priority,description,team
+north-api,blue,t3.micro,true,10,,platform
+south-worker,green,t3.micro,true,20,batch processor,data

@@ -1,0 +1,19 @@
+- key: north-api
+  subnet_key: blue
+  instance_type: t3.micro
+  enabled: true
+  priority: 10
+  description: null
+  team: edge
+  tags:
+    Source: yaml
+    Tier: frontend
+- key: audit-sidecar
+  subnet_key: green
+  instance_type: t3.nano
+  enabled: false
+  priority: 40
+  description: ""
+  team: security
+  tags:
+    Source: yaml

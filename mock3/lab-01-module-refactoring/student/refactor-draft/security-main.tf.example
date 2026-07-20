@@ -1,0 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      configuration_aliases = [
+        aws.network,
+        aws.readonly
+      ]
+    }
+  }
+}
+
+data "aws_caller_identity" "observer" {
+  # Defect: omission of provider = aws.readonly can still run if a high-privilege
+  # default provider exists, but it violates the required identity boundary.
+}
+
+resource "aws_security_group" "tier" {
+  provider = aws.network
+  # remaining resource arguments omitted from the failed draft
+}

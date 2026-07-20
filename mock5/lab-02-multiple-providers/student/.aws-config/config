@@ -1,0 +1,21 @@
+[default]
+region = us-east-1
+output = json
+
+[profile compute-runner]
+role_arn = arn:aws:iam::000000000000:role/lab02-compute-session
+source_profile = localstack-seed
+region = us-east-1
+output = json
+
+[profile identity-operator]
+role_arn = arn:aws:iam::000000000000:role/lab02-identity-session
+source_profile = localstack-seed
+region = us-east-1
+output = json
+
+[profile readonly-audit]
+role_arn = arn:aws:iam::000000000000:role/lab02-audit-session
+source_profile = localstack-seed
+region = us-east-1
+output = json

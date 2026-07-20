@@ -1,0 +1,134 @@
+[
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "frontend",
+    "from_port": 80,
+    "to_port": 80,
+    "protocol": "tcp",
+    "source_selector": "public",
+    "description": "Public HTTP entry",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "frontend",
+    "from_port": 443,
+    "to_port": 443,
+    "protocol": "tcp",
+    "source_selector": "public",
+    "description": "Public HTTPS entry",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "frontend",
+    "destination": "datastore",
+    "from_port": 5432,
+    "to_port": 5432,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Frontend to PostgreSQL",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "frontend",
+    "destination": "operations",
+    "from_port": 8082,
+    "to_port": 8082,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Frontend control channel",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "datastore",
+    "destination": "operations",
+    "from_port": 8082,
+    "to_port": 8082,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Datastore control channel",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "operations",
+    "destination": "frontend",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Operations SSH to frontend",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "operations",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol": "tcp",
+    "source_selector": "administration",
+    "description": "Administration subnet SSH",
+    "enabled": true
+  },
+  {
+    "direction": "egress",
+    "source": "frontend",
+    "destination": "datastore",
+    "from_port": 443,
+    "to_port": 443,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Egress row must be ignored",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "frontend",
+    "from_port": 9000,
+    "to_port": 9000,
+    "protocol": "tcp",
+    "source_selector": "administration",
+    "description": "Disabled diagnostic endpoint",
+    "enabled": false
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "datastore",
+    "from_port": null,
+    "to_port": null,
+    "protocol": "-1",
+    "source_selector": "administration",
+    "description": "All protocols from administration",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "operations",
+    "from_port": 53,
+    "to_port": 53,
+    "protocol": "udp",
+    "source_selector": "public",
+    "description": "Public UDP resolver probe",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "operations",
+    "destination": "datastore",
+    "from_port": 10000,
+    "to_port": 10100,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Operations high-port range",
+    "enabled": true
+  }
+]

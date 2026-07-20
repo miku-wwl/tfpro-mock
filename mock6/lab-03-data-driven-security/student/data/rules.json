@@ -1,0 +1,134 @@
+[
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 80,
+    "to_port": 80,
+    "protocol": "tcp",
+    "source_selector": "dmz",
+    "description": "HTTP from the DMZ network",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 443,
+    "to_port": 443,
+    "protocol": "tcp",
+    "source_selector": "dmz",
+    "description": "HTTPS from the DMZ network",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "edge",
+    "destination": "ledger",
+    "from_port": 5432,
+    "to_port": 5432,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Database access from entry services",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "edge",
+    "destination": "control",
+    "from_port": 8082,
+    "to_port": 8082,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Control API from entry services",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "ledger",
+    "destination": "control",
+    "from_port": 8082,
+    "to_port": 8082,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Control API from data services",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "control",
+    "destination": "edge",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol": "tcp",
+    "source_selector": "",
+    "description": "Maintenance channel from control services",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "control",
+    "from_port": 22,
+    "to_port": 22,
+    "protocol": "tcp",
+    "source_selector": "admin",
+    "description": "Administrative SSH",
+    "enabled": true
+  },
+  {
+    "direction": "egress",
+    "source": "edge",
+    "destination": "control",
+    "from_port": null,
+    "to_port": null,
+    "protocol": "-1",
+    "source_selector": "",
+    "description": "Outbound policy supplied for audit",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "ledger",
+    "from_port": 6379,
+    "to_port": 6379,
+    "protocol": "tcp",
+    "source_selector": "dmz",
+    "description": "Disabled cache migration",
+    "enabled": false
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": null,
+    "to_port": null,
+    "protocol": "-1",
+    "source_selector": "dmz",
+    "description": "All protocols from the DMZ network",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "control",
+    "from_port": 53,
+    "to_port": 53,
+    "protocol": "udp",
+    "source_selector": "admin",
+    "description": "DNS from administration network",
+    "enabled": true
+  },
+  {
+    "direction": "ingress",
+    "source": "-",
+    "destination": "edge",
+    "from_port": 10000,
+    "to_port": 10100,
+    "protocol": "tcp",
+    "source_selector": "dmz",
+    "description": "Ephemeral application callback range",
+    "enabled": true
+  }
+]

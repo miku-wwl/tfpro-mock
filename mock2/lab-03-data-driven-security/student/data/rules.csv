@@ -1,0 +1,13 @@
+direction,source,destination,from_port,to_port,protocol,source_selector,description,enabled
+ingress,-,frontend,80,80,tcp,public,Public web HTTP,true
+ingress,-,frontend,443,443,tcp,public,Public web HTTPS,true
+ingress,frontend,datastore,5432,5432,tcp,,Frontend to database,true
+ingress,frontend,operations,8082,8082,tcp,,Frontend telemetry TCP,true
+ingress,datastore,operations,8082,8082,tcp,,Datastore telemetry TCP,true
+ingress,operations,frontend,22,22,tcp,,Operations SSH to frontend,true
+ingress,-,operations,22,22,tcp,administration,Administration SSH,true
+egress,frontend,datastore,443,443,tcp,,Filtered egress example,true
+ingress,-,frontend,9090,9090,tcp,public,Disabled diagnostic port,false
+ingress,-,frontend,,,-1,public,All protocols from public test subnet,true
+ingress,frontend,operations,8082,8082,udp,,Frontend telemetry UDP,true
+ingress,-,frontend,10000,10100,tcp,administration,Administration application range,true

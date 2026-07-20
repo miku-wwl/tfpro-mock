@@ -1,0 +1,13 @@
+[default]
+region = us-west-2
+output = text
+
+[profile compute_operator]
+role_arn = arn:aws:iam::000000000000:role/Lab02ComputeOperatorRole
+source_profile = default
+region = us-east-1
+
+[profile identity_operator]
+role_arn = arn:aws:iam::000000000000:role/Lab02IdentityOperatorRole
+source_profile = default
+region = us-east-1

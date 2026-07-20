@@ -1,0 +1,42 @@
+{
+  "lab_prefix": "tfr04-placeholder",
+  "region": "us-east-1",
+  "localstack_endpoint": "http://127.0.0.1:4566",
+  "buckets": {
+    "assets": "tfr04-placeholder-vault-assets",
+    "logs": "tfr04-placeholder-vault-logs",
+    "state": "tfr04-placeholder-tfstate"
+  },
+  "iam_users": {
+    "alpha": "tfr04-placeholder-operator-alpha",
+    "beta": "tfr04-placeholder-operator-beta",
+    "gamma": "tfr04-placeholder-operator-gamma"
+  },
+  "security_group": {
+    "id": "pending-security-group-id",
+    "name": "tfr04-placeholder-app-edge",
+    "vpc_id": "pending-vpc-id",
+    "rule_ids": {
+      "ops-tcp-8443": "pending-operations-rule-id",
+      "audit-tcp-9443": "pending-audit-rule-id"
+    }
+  },
+  "objects": {
+    "base": {
+      "key": "base.txt",
+      "sha256": "placeholder",
+      "etag": "placeholder"
+    },
+    "retained": {
+      "key": "retained.txt",
+      "sha256": "placeholder",
+      "etag": "placeholder"
+    },
+    "retired_probe": {
+      "key": "retired-probe.txt",
+      "sha256": "placeholder",
+      "etag": "placeholder"
+    }
+  },
+  "initial_state_addresses": []
+}

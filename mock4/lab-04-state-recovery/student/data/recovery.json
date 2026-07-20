@@ -1,0 +1,40 @@
+{
+  "items": [
+    {
+      "kind": "iam_user",
+      "address_key": "alpha",
+      "remote_suffix": "operator-alpha",
+      "enabled": true,
+      "priority": 30,
+      "keep_remote": null,
+      "description": "canonical alpha record"
+    },
+    {
+      "kind": "iam_user",
+      "address_key": "gamma",
+      "remote_suffix": "operator-gamma",
+      "enabled": true,
+      "priority": 25,
+      "keep_remote": false,
+      "description": "gamma record"
+    },
+    {
+      "kind": "security_group",
+      "address_key": "application",
+      "remote_suffix": "app-edge",
+      "enabled": true,
+      "priority": 50,
+      "keep_remote": false,
+      "description": "existing application security group"
+    },
+    {
+      "kind": "security_group_rule",
+      "address_key": "audit-tcp-9443",
+      "remote_suffix": null,
+      "enabled": true,
+      "priority": 45,
+      "keep_remote": false,
+      "description": "audit ingress"
+    }
+  ]
+}

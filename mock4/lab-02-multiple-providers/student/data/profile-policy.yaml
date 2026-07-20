@@ -1,0 +1,20 @@
+defaults:
+  region: us-east-1
+  output: json
+  enabled: true
+  session_ttl: 1200
+records:
+  - map_key: identity
+    output: null
+    enabled: true
+    session_ttl: 1800
+    module_targets:
+      - identity
+    priority: 30
+  - map_key: audit
+    output: text
+    enabled: true
+    session_ttl: null
+    module_targets:
+      - audit
+    priority: 30

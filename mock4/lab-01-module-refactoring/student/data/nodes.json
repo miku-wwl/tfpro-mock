@@ -1,0 +1,22 @@
+[
+  {
+    "key": "south-worker",
+    "subnet_key": "green",
+    "instance_type": "t3.micro",
+    "enabled": true,
+    "priority": 20,
+    "description": null,
+    "team": "analytics",
+    "tags": {"Source": "json", "Mode": "batch"}
+  },
+  {
+    "key": "canary-probe",
+    "subnet_key": "blue",
+    "instance_type": "t3.nano",
+    "enabled": false,
+    "priority": 30,
+    "description": "disabled probe",
+    "team": null,
+    "tags": {}
+  }
+]

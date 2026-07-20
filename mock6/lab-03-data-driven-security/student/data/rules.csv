@@ -1,0 +1,13 @@
+direction,source,destination,from_port,to_port,protocol,source_selector,description,enabled
+ingress,-,edge,80,80,tcp,dmz,HTTP from the DMZ network,true
+ingress,-,edge,443,443,tcp,dmz,HTTPS from the DMZ network,true
+ingress,edge,ledger,5432,5432,tcp,,Database access from entry services,true
+ingress,edge,control,8082,8082,tcp,,Control API from entry services,true
+ingress,ledger,control,8082,8082,tcp,,Control API from data services,true
+ingress,control,edge,22,22,tcp,,Maintenance channel from control services,true
+ingress,-,control,22,22,tcp,admin,Administrative SSH,true
+egress,edge,control,,,-1,,Outbound policy supplied for audit,true
+ingress,-,ledger,6379,6379,tcp,dmz,Disabled cache migration,false
+ingress,-,edge,,,-1,dmz,All protocols from the DMZ network,true
+ingress,-,control,53,53,udp,admin,DNS from administration network,true
+ingress,-,edge,10000,10100,tcp,dmz,Ephemeral application callback range,true

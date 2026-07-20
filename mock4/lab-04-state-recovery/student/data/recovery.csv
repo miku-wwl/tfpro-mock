@@ -1,0 +1,6 @@
+kind,address_key,remote_suffix,enabled,priority,keep_remote,description
+iam_user,alpha,operator-alpha,true,10,,lower-priority CSV duplicate
+iam_user,beta,operator-beta,true,20,false,primary beta record
+bucket,logs,vault-logs,true,10,false,existing logs bucket
+security_group_rule,ops-tcp-8443,,true,40,false,operations ingress
+metadata,disabled-row,,false,99,,must be filtered
