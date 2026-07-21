@@ -153,17 +153,17 @@ terraform plan
 * 不受输入顺序影响；
 * 能够区分来源、目标、协议、起始端口和结束端口。
 
-存在两条目标为控制安全组、端口为 TCP/8082 的规则。这两条规则必须同时存在，并且必须拥有不同的 Terraform 资源地址。
+数据中有两条 `destination = "control"`、`protocol = "tcp"` 且端口为 `8082` 的规则。这两条规则必须同时存在，并且必须拥有不同的 Terraform 资源地址。
 
-所有 VPC、子网、子网 CIDR 和安全组 ID，都必须通过数据源解析获得。
+所有 VPC、subnet、subnet CIDR 和 security group ID 都必须通过 data source 查询获得。
 
-当规则来源为子网 CIDR 时，只能设置 `cidr_ipv4`。
+当规则来源是 subnet CIDR（即 `source = "-"`）时，只能设置 `cidr_ipv4`。
 
-当规则来源为安全组时，只能设置 `referenced_security_group_id`。
+当规则来源是 security group（例如 `source = "edge"`）时，只能设置 `referenced_security_group_id`。
 
-这两个参数互斥，不能同时设置。
+`cidr_ipv4` 与 `referenced_security_group_id` 互斥，不能同时设置。
 
-当协议为 `-1` 时，应按照 Provider Schema 的要求处理端口参数，不得人为填入一个虚构的端口值。
+当 `protocol = "-1"` 时，必须按 AWS provider schema 处理 `from_port` 和 `to_port`；不得人为填入虚构端口。
 
 ## 任务 5 — 创建输出并验证资源地址稳定性
 

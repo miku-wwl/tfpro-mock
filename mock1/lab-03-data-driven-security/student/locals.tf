@@ -21,15 +21,21 @@ locals {
     }
   ]
 
-  # TODO: Apply the candidate policy filters.
-  ingress_rules = local.normalized_rules
+  ingress_rules = [
+    for rule in local.normalized_rules : rule if rule.direction == "ingress" && rule.enabled
+  ]
 
-  # TODO: Replace this incomplete key with a stable semantic identity.
   ingress_rule_map = {
     for rule in local.ingress_rules :
-    "${rule.destination}|${rule.from_port}" => rule
+    jsonencode([
+      rule.source,
+      rule.source_selector,
+      rule.destination,
+      rule.protocol,
+      rule.from_port,
+      rule.to_port,
+    ]) => rule
   }
-
   subnet_cidrs = {
     dmz_net   = data.aws_subnet.segment["public"].cidr_block
     admin_net = data.aws_subnet.segment["administration"].cidr_block
