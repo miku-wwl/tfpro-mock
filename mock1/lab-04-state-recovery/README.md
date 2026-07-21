@@ -1,80 +1,80 @@
-# Lab 04 — State Recovery and Backend Migration
+# Lab 04 — State 恢复与 Backend 迁移
 
-> Independent Terraform Professional practice lab. This is not an official HashiCorp exam question.
+> 独立的 Terraform Professional 练习 Lab，并非 HashiCorp 官方考试题目。
 
-## Scenario
+## 场景
 
-A previous migration stopped halfway through. The infrastructure still exists in LocalStack, but the Terraform configuration, local state, and backend settings no longer agree.
+一次此前的迁移在中途停止。基础设施仍然存在于 LocalStack 中，但 Terraform 配置、本地 state 和 backend 设置已不再一致。
 
-Your job is to recover management of the existing resources without rebuilding them, move the state to the required S3 backend, stop managing one retained object without deleting it, and add one new managed object.
+你的任务是：在不重新创建已有资源的前提下，恢复 Terraform 对这些资源的管理；将 state 迁移到指定的 S3 backend；停止管理一个需要保留的对象但不删除它；并新增一个受管理对象。
 
-**Target time:** 45–55 minutes  
-**Target difficulty:** Terraform Professional 90–94/100
+**目标时长：**45–55 分钟
+**目标难度：**Terraform Professional 90–94/100
 
-## Environment
+## 环境
 
 - Terraform CLI 1.11.x
-- Docker Desktop with Docker Compose
+- 已安装 Docker Compose 的 Docker Desktop
 - LocalStack
-- Bash or PowerShell
+- Bash 或 PowerShell
 
-No real AWS credentials are required. The scripts use only the disposable credentials `test` / `test` against `http://localhost:4566`.
+不需要真实 AWS 凭证。脚本只使用针对 `http://localhost:4566` 的一次性测试凭证 `test` / `test`。
 
-## Start the lab
+## 开始 Lab
 
-Bash:
+Bash：
 
 ```bash
 ./scripts/setup.sh
 cd student
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/setup.ps1
 Set-Location student
 ```
 
-The setup creates the remote resources, records a baseline under `bootstrap/baseline/`, and prepares a deliberately inconsistent local state in `student/terraform.tfstate`.
+初始化脚本会创建远程资源、在 `bootstrap/baseline/` 下保存基线，并在 `student/terraform.tfstate` 中准备一个刻意不一致的本地 state。
 
-## Initial damaged condition
+## 初始损坏状态
 
-After setup, expect all of the following:
+完成初始化后，应当存在以下所有情况：
 
-- The active state is local, while an S3 backend configuration file exists with a near-miss key and incorrect connection settings.
-- The assets bucket is recorded at `aws_s3_bucket.primary`, but the target configuration uses `aws_s3_bucket.assets`.
-- The three IAM users are recorded at `aws_iam_user.alpha`, `aws_iam_user.beta`, and `aws_iam_user.gamma`.
-- The target IAM resource uses `for_each`, and one map key is misspelled.
-- The logs bucket and application security group exist remotely but are absent from state.
-- One ingress rule is recorded at a legacy address; the other ingress rule is absent from state.
-- `base.txt` and `retained.txt` are both managed in the starting state.
-- A stale IAM address remains in state even though its remote user no longer exists.
-- The starter configuration contains provider, tag, and physical-name drift.
+- 当前使用的是 local state；同时存在一个 S3 backend 配置文件，但其中的 key 接近正确值而非正确值，连接设置也不正确。
+- assets bucket 在 state 中的地址是 `aws_s3_bucket.primary`，而目标配置使用 `aws_s3_bucket.assets`。
+- 三个 IAM user 在 state 中的地址分别是 `aws_iam_user.alpha`、`aws_iam_user.beta` 和 `aws_iam_user.gamma`。
+- 目标 IAM resource 使用 `for_each`，其中一个 map key 拼写错误。
+- logs bucket 和 application security group 存在于远程环境，但不在 state 中。
+- 一条 ingress rule 记录在旧地址；另一条 ingress rule 不在 state 中。
+- `base.txt` 和 `retained.txt` 在起始 state 中都受 Terraform 管理。
+- 一个过期的 IAM 地址仍留在 state 中，但对应的远程 IAM user 已不存在。
+- 起始配置中存在 provider、tag 和物理名称漂移。
 
-Use `terraform state list`, `terraform state show`, the baseline files, and normal Terraform plans to understand the environment. Do not edit state JSON.
+使用 `terraform state list`、`terraform state show`、基线文件及普通 Terraform plan 来理解环境。不得编辑 state JSON。
 
-## Task 1 — Repair and migrate the backend
+## 任务 1 — 修复并迁移 Backend
 
-Configure and use the S3 backend created by setup.
+配置并使用初始化脚本创建的 S3 backend。
 
-The final backend key must be exactly:
+最终 backend key 必须精确为：
 
 ```text
 tfpro-sim/lab-04/terraform.tfstate
 ```
 
-Requirements:
+要求：
 
-- Migrate the existing local state; do not start with an empty remote state.
-- Preserve every valid state record during migration.
-- Correct the backend region and LocalStack S3 endpoint.
-- Do not keep using the near-miss backend key.
-- The completed lab must no longer use local state.
+- 迁移现有本地 state；不得以空的远程 state 开始。
+- 迁移过程中保留每一条有效的 state 记录。
+- 修正 backend region 和 LocalStack S3 endpoint。
+- 不得继续使用接近正确值的 backend key。
+- 完成 Lab 后不得再使用 local state。
 
-## Task 2 — Adopt the existing resources
+## 任务 2 — 接管已有资源
 
-The final state must contain these exact addresses:
+最终 state 必须包含以下精确地址：
 
 ```text
 aws_s3_bucket.assets
@@ -88,47 +88,47 @@ aws_security_group_rule.inbound["ops"]
 aws_s3_object.base
 ```
 
-Use the baseline data and remote inspection to determine import identifiers. The README intentionally does not provide complete import commands or complete import identifiers.
+使用基线数据和远程检查来确定 import identifier。README 故意不会提供完整的 import 命令或完整的 import identifier。
 
-After adopting resources, align the configuration with the remote objects. Do not use broad `ignore_changes` rules to hide drift.
+接管资源后，应使配置与远程对象一致。不得使用范围过大的 `ignore_changes` 来掩盖漂移。
 
-## Task 3 — Migrate and clean state addresses
+## 任务 3 — 迁移并清理 State 地址
 
-Complete the address migration without destroying and recreating infrastructure.
+在不销毁或重新创建基础设施的前提下完成地址迁移。
 
-Final requirements:
+最终要求：
 
-- `aws_s3_bucket.primary` is absent.
-- `aws_iam_user.alpha`, `aws_iam_user.beta`, and `aws_iam_user.gamma` are absent.
-- The legacy ingress-rule address is absent.
-- The stale IAM address is absent.
-- A real remote resource is never managed by two addresses at the same time.
-- The IAM `for_each` keys are exactly `alpha`, `beta`, and `gamma`.
+- `aws_s3_bucket.primary` 不存在。
+- `aws_iam_user.alpha`、`aws_iam_user.beta` 和 `aws_iam_user.gamma` 不存在。
+- 旧 ingress-rule 地址不存在。
+- 过期 IAM 地址不存在。
+- 同一个真实远程资源不得同时由两个地址管理。
+- IAM `for_each` key 必须精确为 `alpha`、`beta` 和 `gamma`。
 
-A plan that proposes delete/create or replacement actions for the existing buckets, users, security group, or ingress rules is not acceptable.
+如果 plan 对现有 bucket、user、security group 或 ingress rule 提出 delete/create 或 replacement 操作，则不可接受。
 
-## Task 4 — Stop managing `retained.txt` without deleting it
+## 任务 4 — 停止管理 `retained.txt`，但不得删除它
 
-Remove `retained.txt` from Terraform management while preserving the remote object.
+将 `retained.txt` 从 Terraform 管理中移除，同时保留远程对象。
 
-Final requirements:
+最终要求：
 
-- Its resource block is absent from configuration.
-- Its state address is absent.
-- The remote key `retained.txt` still exists in the assets bucket.
-- Its content remains exactly `KEEP-ME`.
-- It is not deleted and recreated during the exercise.
+- 配置中不存在它的 resource block。
+- state 中不存在它的地址。
+- assets bucket 中的远程 key `retained.txt` 仍然存在。
+- 其内容必须仍精确为 `KEEP-ME`。
+- 整个练习过程中不得删除并重新创建它。
 
-## Task 5 — Add the new object and finish the outputs
+## 任务 5 — 新增对象并完成输出
 
-Create a managed S3 object:
+创建一个受 Terraform 管理的 S3 object：
 
 ```text
 key     = new.txt
 content = Success
 ```
 
-Create these Terraform outputs:
+创建以下 Terraform outputs：
 
 - `bucket_names`
 - `iam_user_names`
@@ -136,7 +136,7 @@ Create these Terraform outputs:
 - `security_group_rule_ids`
 - `managed_object_keys`
 
-Generate these files dynamically from Terraform values:
+从 Terraform value 动态生成以下文件：
 
 ```text
 generated/s3.txt
@@ -144,46 +144,46 @@ generated/iam-users.txt
 generated/security.txt
 ```
 
-Required file content:
+文件内容要求：
 
-- `s3.txt`: the two managed bucket names.
-- `iam-users.txt`: the three IAM user names.
-- `security.txt`: the security group ID followed by both ingress-rule IDs.
+- `s3.txt`：两个受管理 bucket 的名称。
+- `iam-users.txt`：三个 IAM user 的名称。
+- `security.txt`：security group ID，后接两个 ingress-rule ID。
 
-Use deterministic ordering. Do not hardcode remote IDs.
+必须使用确定性排序。不得硬编码远程 ID。
 
-## Final acceptance criteria
+## 最终验收标准
 
-Before considering the lab complete:
+在认为 Lab 完成前，必须满足：
 
-1. `terraform fmt -check -recursive` passes.
-2. `terraform validate` passes.
-3. `terraform state list` contains all required target addresses and none of the legacy addresses.
-4. The backend uses the exact required key.
-5. The original bucket names, IAM user names, security group ID, and rule identities match the baseline.
-6. `retained.txt` still exists with `KEEP-ME` and is absent from state.
-7. `new.txt` exists with `Success` and is present in state.
-8. The generated files contain dynamically derived values in stable order.
-9. The final plan reports **0 to add, 0 to change, 0 to destroy**.
+1. `terraform fmt -check -recursive` 通过。
+2. `terraform validate` 通过。
+3. `terraform state list` 包含所有目标地址，且不包含任何旧地址。
+4. backend 使用精确要求的 key。
+5. 原有 bucket 名称、IAM user 名称、security group ID 和 rule identity 均与基线一致。
+6. `retained.txt` 仍存在、内容为 `KEEP-ME`，且不在 state 中。
+7. `new.txt` 存在、内容为 `Success`，且在 state 中。
+8. 生成的文件包含从 Terraform 动态得出的值，并使用稳定排序。
+9. 最终 plan 报告 **0 to add, 0 to change, 0 to destroy**。
 
-## Prohibited shortcuts
+## 禁止的捷径
 
-- Do not directly edit `terraform.tfstate` or backend state JSON.
-- Do not delete and recreate existing resources to fix addresses.
-- Do not import the same remote object into multiple active addresses.
-- Do not use broad lifecycle ignores to conceal configuration drift.
-- Do not place real AWS credentials in any file.
-- Do not run destructive commands without first reviewing a saved plan.
+- 不得直接编辑 `terraform.tfstate` 或 backend state JSON。
+- 不得为了修复地址而删除并重新创建已有资源。
+- 不得将同一个远程对象 import 到多个活跃地址。
+- 不得使用范围过大的 lifecycle ignore 来隐藏配置漂移。
+- 不得在任何文件中写入真实 AWS 凭证。
+- 未先审查保存的 plan 前，不得运行破坏性命令。
 
-## Reset
+## 重置
 
-Bash:
+Bash：
 
 ```bash
 ./scripts/reset.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/reset.ps1
