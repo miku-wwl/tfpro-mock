@@ -68,9 +68,11 @@ tfpro-sim/lab-04/terraform.tfstate
 
 - 迁移现有本地 state；不得以空的远程 state 开始。
 - 迁移过程中保留每一条有效的 state 记录。
-- 修正 backend region 和 LocalStack S3 endpoint。
+- 本 Lab 的 backend bucket 位于 `us-east-1`，修正 backend region 和 LocalStack S3 endpoint；backend region 可与资源 provider region 不同。
 - 不得继续使用接近正确值的 backend key。
 - 完成 Lab 后不得再使用 local state。
+
+> ☆ Note：`backend "s3" {}` 声明 backend 类型，具体参数通过 `terraform init -backend-config=backend.hcl` 注入。
 
 ## 任务 2 — 接管已有资源
 

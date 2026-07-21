@@ -9,7 +9,7 @@ provider "aws" {
   s3_use_path_style           = true
 
   endpoints {
-    ec2 = var.ec2_endpoint
+    ec2 = var.localstack_endpoint
     iam = var.localstack_endpoint
     s3  = var.localstack_endpoint
     sts = var.localstack_endpoint

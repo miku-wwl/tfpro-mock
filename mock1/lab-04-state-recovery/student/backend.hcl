@@ -1,6 +1,6 @@
 bucket = "tfpro-lab04-tfstate"
-key    = "tfpro-sim/lab-04/terraform.tfstaet"
-region = "eu-west-1"
+key    = "tfpro-sim/lab-04/terraform.tfstate"
+region = "us-east-1"
 
 access_key                   = "test"
 secret_key                   = "test"
@@ -12,5 +12,5 @@ skip_s3_checksum             = true
 use_path_style               = true
 
 endpoints = {
-  s3 = "http://localhost:4576"
+  s3 = "http://localhost:4566"
 }
