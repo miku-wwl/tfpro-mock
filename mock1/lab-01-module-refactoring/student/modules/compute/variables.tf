@@ -17,7 +17,7 @@ variable "subnet_ids" {
 }
 
 variable "security_group_ids" {
-  type = set(string)
+  type = map(string)
 }
 
 variable "instance_profile_name" {

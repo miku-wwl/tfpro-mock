@@ -1,6 +1,6 @@
 # Draft contract issue: a resource vpc_id argument requires one string.
 variable "vpc_id" {
-  type = list(string)
+  type = string
 }
 
 variable "security_groups" {

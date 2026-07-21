@@ -40,7 +40,12 @@ locals {
       port         = 8080
       protocol     = "tcp"
       description  = "Public application entry"
+
+      tags = {
+        Name = "driftwood-edge_http"
+      }
     }
+
     service_from_edge = {
       target_group = "service"
       source_group = "edge"
@@ -48,7 +53,12 @@ locals {
       port         = 9000
       protocol     = "tcp"
       description  = "Edge to service"
+
+      tags = {
+        Name = "driftwood-service_from_edge"
+      }
     }
+
     service_from_ops = {
       target_group = "service"
       source_group = "ops"
@@ -56,7 +66,12 @@ locals {
       port         = 9001
       protocol     = "tcp"
       description  = "Operations health access"
+
+      tags = {
+        Name = "driftwood-service_from_ops"
+      }
     }
+
     ops_ssh = {
       target_group = "ops"
       source_group = null
@@ -64,7 +79,12 @@ locals {
       port         = 22
       protocol     = "tcp"
       description  = "Administrative SSH"
+
+      tags = {
+        Name = "driftwood-ops_ssh"
+      }
     }
+
     edge_from_ops = {
       target_group = "edge"
       source_group = "ops"
@@ -72,6 +92,10 @@ locals {
       port         = 8443
       protocol     = "tcp"
       description  = "Operations diagnostics"
+
+      tags = {
+        Name = "driftwood-edge_from_ops"
+      }
     }
   }
 

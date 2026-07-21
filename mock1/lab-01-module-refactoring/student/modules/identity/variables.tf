@@ -1,6 +1,6 @@
 variable "naming" {
   type = object({
-    stem   = string
+    label  = string
     suffix = string
   })
 }

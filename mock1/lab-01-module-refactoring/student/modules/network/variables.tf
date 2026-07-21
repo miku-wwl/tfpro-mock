@@ -6,7 +6,7 @@ variable "network" {
 }
 
 variable "subnets" {
-  type = list(object({
+  type = map(object({
     key               = string
     cidr_block        = string
     availability_zone = string
