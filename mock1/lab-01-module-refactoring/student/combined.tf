@@ -110,3 +110,78 @@ resource "aws_s3_bucket" "state_store" {
     Lab     = "lab-01"
   }
 }
+
+moved {
+  from = aws_iam_instance_profile.runtime
+  to   = module.identity.aws_iam_instance_profile.runtime
+}
+
+moved {
+  from = aws_iam_role.runtime
+  to   = module.identity.aws_iam_role.runtime
+}
+
+moved {
+  from = aws_instance.nodes["gateway"]
+  to   = module.compute.aws_instance.nodes["gateway"]
+}
+
+moved {
+  from = aws_instance.nodes["worker"]
+  to   = module.compute.aws_instance.nodes["worker"]
+}
+
+moved {
+  from = aws_security_group.tiers["edge"]
+  to   = module.security.aws_security_group.tiers["edge"]
+}
+
+moved {
+  from = aws_security_group.tiers["ops"]
+  to   = module.security.aws_security_group.tiers["ops"]
+}
+
+moved {
+  from = aws_security_group.tiers["service"]
+  to   = module.security.aws_security_group.tiers["service"]
+}
+
+moved {
+  from = aws_subnet.zones[0]
+  to   = module.network.aws_subnet.zones["north"]
+}
+
+moved {
+  from = aws_subnet.zones[1]
+  to   = module.network.aws_subnet.zones["south"]
+}
+
+moved {
+  from = aws_vpc.harbor
+  to   = module.network.aws_vpc.harbor
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.links["edge_from_ops"]
+  to   = module.security.aws_vpc_security_group_ingress_rule.links["edge_from_ops"]
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.links["edge_http"]
+  to   = module.security.aws_vpc_security_group_ingress_rule.links["edge_http"]
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.links["ops_ssh"]
+  to   = module.security.aws_vpc_security_group_ingress_rule.links["ops_ssh"]
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.links["service_from_edge"]
+  to   = module.security.aws_vpc_security_group_ingress_rule.links["service_from_edge"]
+}
+
+moved {
+  from = aws_vpc_security_group_ingress_rule.links["service_from_ops"]
+  to   = module.security.aws_vpc_security_group_ingress_rule.links["service_from_ops"]
+}
