@@ -1,162 +1,162 @@
-# Lab 02 — Multiple AWS Providers and Safe State Migration
+# Lab 02 — 多 AWS Provider 配置与安全的 State 迁移
 
-This is an independent Terraform Professional practice lab. It is not an official exam question.
+这是一套独立编写的 Terraform Professional 实践 Lab，并非官方考试题目。
 
-## Scenario
+## 场景
 
-A platform team has split operational duties across compute, identity, and audit roles. The Terraform configuration was partially refactored, but the shared AWS files, provider wiring, dependency lock file, an S3 object migration, and an Auto Scaling drift rule are incomplete.
+某平台团队将日常运维职责拆分给了计算、身份和审计三个角色。现有 Terraform 配置已经进行过部分重构，但共享 AWS 配置文件、Provider 绑定关系、依赖锁定文件、S3 对象迁移流程，以及 Auto Scaling 漂移处理规则仍不完整。
 
-The LocalStack environment contains the following existing objects:
+LocalStack 环境中已经存在以下对象：
 
-- three IAM roles used by named profiles;
-- one launch template and one Auto Scaling group;
-- one IAM user;
-- one S3 bucket;
-- one S3 object at key `artifact.txt` whose content is exactly `ORIGINAL-CONTENT`.
+* 三个供命名配置文件使用的 IAM 角色；
+* 一个启动模板和一个 Auto Scaling 组；
+* 一个 IAM 用户；
+* 一个 S3 Bucket；
+* 一个 key 为 `artifact.txt` 的 S3 对象，其内容必须严格保持为 `ORIGINAL-CONTENT`。
 
-The setup script imports the existing resources into the starter state. Do not edit `terraform.tfstate` directly.
+初始化脚本会将现有资源导入起始 state。不得直接修改 `terraform.tfstate`。
 
-## Target time and difficulty
+## 目标时间与难度
 
-- Target time: 50–60 minutes
-- Target level: Terraform Authoring and Operations Professional
-- Expected final result: a zero-change plan
+* 目标完成时间：50–60 分钟
+* 目标级别：Terraform Authoring and Operations Professional
+* 预期最终结果：执行 `plan` 时不产生任何变更
 
-## Prerequisites
+## 前置条件
 
-- Terraform CLI 1.11.x
-- Docker Desktop with Docker Compose
-- Bash or PowerShell
-- No real AWS credentials are required or permitted
+* Terraform CLI 1.11.x
+* 已安装 Docker Compose 的 Docker Desktop
+* Bash 或 PowerShell
+* 本 Lab 不需要使用真实 AWS 凭证，也不允许使用真实 AWS 凭证
 
-## Setup
+## 环境初始化
 
-From the lab root:
+在 Lab 根目录中运行：
 
 ```bash
 ./scripts/setup.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/setup.ps1
 ```
 
-The setup process uses only LocalStack test credentials. It creates the remote objects, writes the generated bucket name to `student/lab.auto.tfvars.json`, imports the existing resources into the starter state, and saves baseline evidence under `bootstrap/baseline/`.
+初始化过程只会使用 LocalStack 测试凭证。脚本会创建远程对象，将自动生成的 Bucket 名称写入 `student/lab.auto.tfvars.json`，把现有资源导入起始 state，并将基线证据保存到 `bootstrap/baseline/`。
 
-## Rules
+## 规则
 
-- Work only under `student/`.
-- Do not modify `bootstrap/` or the generated `student/lab.auto.tfvars.json`.
-- Do not edit state JSON.
-- Do not delete or recreate the existing S3 object.
-- Do not remove the Auto Scaling group from state.
-- Do not use broad lifecycle suppression to hide unrelated changes.
-- Preserve the existing bucket, object key, object content, launch template, Auto Scaling group, and IAM user.
+* 只能修改 `student/` 目录下的内容。
+* 不得修改 `bootstrap/`，也不得修改自动生成的 `student/lab.auto.tfvars.json`。
+* 不得直接编辑 state JSON。
+* 不得删除或重新创建现有 S3 对象。
+* 不得将 Auto Scaling 组从 state 中移除。
+* 不得使用范围过大的 lifecycle 忽略规则来掩盖无关变更。
+* 必须保留现有的 Bucket、对象 key、对象内容、启动模板、Auto Scaling 组和 IAM 用户。
 
-## Task 1 — Build the shared AWS files
+## 任务 1 — 创建共享 AWS 配置文件
 
-Create these exact files:
+创建以下两个文件，路径必须完全一致：
 
-- `student/.aws/config`
-- `student/.aws/credentials`
+* `student/.aws/config`
+* `student/.aws/credentials`
 
-The config file must contain exactly these three role profiles and no `default` profile:
+`config` 文件中必须且只能包含以下三个角色配置，不得添加 `default` 配置：
 
-- `compute-operator`
-- `identity-operator`
-- `readonly-auditor`
+* `compute-operator`
+* `identity-operator`
+* `readonly-auditor`
 
-Every role profile must use:
+每个角色配置都必须使用：
 
-- region `us-east-1`;
-- output format `json`;
-- the matching role ARN shown in `bootstrap/terraform output`;
-- a valid `source_profile`.
+* `us-east-1` 区域；
+* `json` 输出格式；
+* `bootstrap/terraform output` 中显示的对应角色 ARN；
+* 一个有效的 `source_profile`。
 
-Use these LocalStack-only source credential profile names in `student/.aws/credentials`:
+在 `student/.aws/credentials` 中使用以下仅供 LocalStack 使用的源凭证配置名称：
 
-- `compute-seed`
-- `identity-seed`
-- `audit-seed`
+* `compute-seed`
+* `identity-seed`
+* `audit-seed`
 
-Each source credential profile must use the literal LocalStack test values `test` / `test`. Do not add real credentials.
+每个源凭证配置中的 Access Key 和 Secret Key 都必须使用 LocalStack 测试值 `test` / `test`。不得添加任何真实凭证。
 
-## Task 2 — Repair provider and module wiring
+## 任务 2 — 修复 Provider 与模块绑定关系
 
-The root module must define exactly these three aliased AWS provider configurations for managed operations:
+根模块必须为受管操作定义且仅定义以下三个带别名的 AWS Provider 配置：
 
-- `aws.compute`
-- `aws.identity`
-- `aws.readonly`
+* `aws.compute`
+* `aws.identity`
+* `aws.readonly`
 
-Meet all of the following requirements:
+必须同时满足以下所有要求：
 
-- the compute module uses `aws.compute`;
-- the identity module uses `aws.identity`;
-- the storage module receives an explicitly selected provider;
-- `data.aws_caller_identity.current` uses `aws.readonly`;
-- every module call uses an explicit `providers` map;
-- each child module declares the alias it accepts through `configuration_aliases`;
-- child modules must not create their own uncontrolled default AWS provider;
-- shared config and credentials paths must resolve to the files created in Task 1.
+* compute 模块使用 `aws.compute`；
+* identity 模块使用 `aws.identity`；
+* storage 模块必须显式接收指定的 Provider；
+* `data.aws_caller_identity.current` 使用 `aws.readonly`；
+* 每个模块调用都必须显式设置 `providers` map；
+* 每个子模块都必须通过 `configuration_aliases` 声明其允许接收的 Provider 别名；
+* 子模块不得自行创建不受控制的默认 AWS Provider；
+* 共享 config 和 credentials 路径必须正确指向任务 1 中创建的文件。
 
-The LocalStack endpoint settings must remain intact.
+必须保留现有 LocalStack endpoint 配置，不得破坏或删除。
 
-## Task 3 — Upgrade and lock the AWS provider
+## 任务 3 — 升级并锁定 AWS Provider
 
-Repair the provider requirements so that the root and all child modules agree on an explicit AWS provider range compatible with the supplied solution baseline.
+修复 Provider 版本要求，使根模块与所有子模块使用一致、明确，并且与题目基线方案兼容的 AWS Provider 版本范围。
 
-Requirements:
+要求：
 
-- use a bounded, intentional version constraint;
-- do not use `latest`;
-- do not remove provider constraints;
-- update `.terraform.lock.hcl` through Terraform CLI commands;
-- `terraform init -backend=false` must complete without a version-selection conflict.
+* 使用有明确上下界或合理边界的版本约束；
+* 不得使用 `latest`；
+* 不得删除 Provider 版本约束；
+* 必须通过 Terraform CLI 命令更新 `.terraform.lock.hcl`；
+* 执行 `terraform init -backend=false` 时不得出现版本选择冲突。
 
-## Task 4 — Migrate the existing S3 object safely
+## 任务 4 — 安全迁移现有 S3 对象
 
-The object already exists remotely and is initially tracked at:
+该对象已经存在于远程环境中，当前由以下 state 地址跟踪：
 
 ```text
 aws_s3_bucket_object.legacy_artifact
 ```
 
-The final state address must be:
+最终 state 地址必须变为：
 
 ```text
 aws_s3_object.artifact
 ```
 
-Requirements:
+要求：
 
-- remove the deprecated resource type from configuration and state;
-- keep the bucket unchanged;
-- keep the key `artifact.txt` unchanged;
-- keep the exact content `ORIGINAL-CONTENT`;
-- do not delete, replace, recreate, or overwrite the remote object;
-- the final plan must not contain a create, delete, or replace action for the object.
+* 从配置和 state 中移除已弃用的资源类型；
+* Bucket 必须保持不变；
+* 对象 key `artifact.txt` 必须保持不变；
+* 对象内容必须严格保持为 `ORIGINAL-CONTENT`；
+* 不得删除、替换、重新创建或覆盖远程对象；
+* 最终 `plan` 中不得出现针对该对象的创建、删除或替换操作。
 
-Choose the appropriate Terraform state and import workflow. The exact command and import identifier are intentionally not provided here.
+请自行选择合适的 Terraform state 操作与 import 流程。题目不会直接提供具体命令和导入标识符。
 
-## Task 5 — Accept one controlled drift
+## 任务 5 — 接受一项受控漂移
 
-The remote Auto Scaling group has desired capacity `1`.
+远程 Auto Scaling 组当前的期望容量为 `1`。
 
-Change the configuration to declare desired capacity `2`, while preserving the remote value `1` and producing no planned update for that property.
+将配置中声明的期望容量改为 `2`，但必须保留远程实际值 `1`，同时确保 `plan` 不会针对该属性生成更新操作。
 
-Requirements:
+要求：
 
-- ignore only `desired_capacity`;
-- do not use `ignore_changes = all`;
-- do not ignore unrelated attributes;
-- do not remove the resource from state.
+* 只能忽略 `desired_capacity`；
+* 不得使用 `ignore_changes = all`；
+* 不得忽略其他无关属性；
+* 不得将该资源从 state 中移除。
 
-## Completion checks
+## 完成检查
 
-Run:
+运行以下命令：
 
 ```bash
 ./scripts/validate.sh student
@@ -165,11 +165,11 @@ terraform -chdir=student plan -out=final.tfplan
 terraform -chdir=student show -no-color final.tfplan
 ```
 
-A completed lab should show:
+完成后的 Lab 应满足以下条件：
 
-- the legacy S3 address absent;
-- `aws_s3_object.artifact` present;
-- all module resources still present;
-- the remote object content and identity unchanged from the baseline;
-- the remote Auto Scaling group desired capacity still equal to `1`;
-- zero resources to add, change, or destroy.
+* 旧的 S3 state 地址已经不存在；
+* `aws_s3_object.artifact` 已存在于 state 中；
+* 所有模块资源仍然存在；
+* 远程对象的内容和标识与基线保持一致；
+* 远程 Auto Scaling 组的期望容量仍然为 `1`；
+* 最终结果为零个资源新增、零个资源变更、零个资源销毁。
