@@ -7,18 +7,17 @@ locals {
     jsonencode(yamldecode(file("${path.module}/data/rules.yaml")))
   )
 
-  # TODO: Make every format produce an identical object type.
   normalized_rules = [
     for rule in local.raw_rules : {
       direction       = lower(rule.direction)
-      source          = rule.source
+      source          = lower(rule.source)
       destination     = lower(rule.destination)
-      from_port       = rule.from_port
-      to_port         = rule.to_port
+      from_port       = try(tonumber(rule.from_port), null)
+      to_port         = try(tonumber(rule.to_port), null)
       protocol        = lower(rule.protocol)
-      source_selector = rule.source_selector
+      source_selector = lower(rule.source_selector)
       description     = rule.description
-      enabled         = rule.enabled
+      enabled         = tobool(rule.enabled)
     }
   ]
 
