@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.11.0, < 1.12.0"
+  required_version = ">= 1.14.0, < 1.15.0"
 
   required_providers {
     aws = {
@@ -20,31 +20,14 @@ locals {
 }
 
 # Temporary default provider left behind by the interrupted refactor.
-provider "aws" {
-  region                      = "us-east-1"
-  access_key                  = "test"
-  secret_key                  = "test"
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
-  s3_use_path_style           = true
-
-  endpoints {
-    autoscaling = local.localstack_endpoint
-    ec2         = local.localstack_endpoint
-    iam         = local.localstack_endpoint
-    s3          = local.localstack_endpoint
-    sts         = local.localstack_endpoint
-  }
-}
 
 provider "aws" {
   alias  = "compute"
   region = "us-east-1"
 
-  profile                  = "compute-admin"
-  shared_config_files      = ["${path.module}/.aws/configs"]
-  shared_credentials_files = ["${path.module}/.aws/credential"]
+  profile                  = "compute-operator"
+  shared_config_files      = ["${path.module}/.aws/config"]
+  shared_credentials_files = ["${path.module}/.aws/credentials"]
 
   skip_credentials_validation = true
   skip_metadata_api_check     = true
@@ -64,9 +47,31 @@ provider "aws" {
   alias  = "identity"
   region = "us-east-1"
 
-  profile                  = "identity-maintainer"
-  shared_config_files      = ["${path.module}/.aws/configs"]
-  shared_credentials_files = ["${path.module}/.aws/credential"]
+  profile                  = "identity-operator"
+  shared_config_files      = ["${path.module}/.aws/config"]
+  shared_credentials_files = ["${path.module}/.aws/credentials"]
+
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  s3_use_path_style           = true
+
+  endpoints {
+    autoscaling = local.localstack_endpoint
+    ec2         = local.localstack_endpoint
+    iam         = local.localstack_endpoint
+    s3          = local.localstack_endpoint
+    sts         = local.localstack_endpoint
+  }
+}
+
+provider "aws" {
+  alias  = "readonly"
+  region = "us-east-1"
+
+  profile                  = "readonly-auditor"
+  shared_config_files      = ["${path.module}/.aws/config"]
+  shared_credentials_files = ["${path.module}/.aws/credentials"]
 
   skip_credentials_validation = true
   skip_metadata_api_check     = true
@@ -84,19 +89,33 @@ provider "aws" {
 
 module "compute" {
   source = "./modules/compute"
+
+  providers = {
+    aws.compute = aws.compute
+  }
 }
 
 module "identity" {
   source = "./modules/identity"
+
+  providers = {
+    aws.identity = aws.identity
+  }
 }
 
 module "storage" {
   source = "./modules/storage"
 
+  providers = {
+    aws.compute = aws.compute
+  }
+
   bucket_name = var.archive_bucket_name
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {
+  provider = aws.readonly
+}
 
 resource "aws_s3_bucket_object" "legacy_artifact" {
   bucket       = module.storage.bucket_name
