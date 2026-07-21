@@ -117,7 +117,8 @@ data "aws_caller_identity" "current" {
   provider = aws.readonly
 }
 
-resource "aws_s3_bucket_object" "legacy_artifact" {
+resource "aws_s3_object" "artifact" {
+  provider     = aws.compute
   bucket       = module.storage.bucket_name
   key          = "artifact.txt"
   content      = "ORIGINAL-CONTENT"
@@ -125,13 +126,10 @@ resource "aws_s3_bucket_object" "legacy_artifact" {
   etag         = md5("ORIGINAL-CONTENT")
 }
 
-resource "aws_s3_object" "artifact" {
-  bucket       = module.storage.bucket_name
-  key          = "artifact.txt"
-  content      = "ORIGINAL-CONTENT\n"
-  content_type = "text/plain"
-  etag         = md5("ORIGINAL-CONTENT\n")
-}
+# import {
+#   to = aws_s3_object.artifact
+#   id = "tfpro-lab02-archive/artifact.txt"
+# }
 
 output "audited_account_id" {
   value = data.aws_caller_identity.current.account_id

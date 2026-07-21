@@ -20,7 +20,7 @@ resource "aws_autoscaling_group" "pool" {
   provider           = aws.compute
   name               = "lab02-runner-pool"
   availability_zones = ["us-east-1a"]
-  desired_capacity   = 1
+  desired_capacity   = 2
   min_size           = 1
   max_size           = 2
 
@@ -36,7 +36,7 @@ resource "aws_autoscaling_group" "pool" {
   }
 
   lifecycle {
-    ignore_changes = [max_size]
+    ignore_changes = [desired_capacity]
   }
 }
 
