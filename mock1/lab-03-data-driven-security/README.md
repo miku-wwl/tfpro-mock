@@ -165,40 +165,6 @@ terraform plan
 
 当 `protocol = "-1"` 时，必须按 AWS provider schema 处理 `from_port` 和 `to_port`；不得人为填入虚构端口。
 
-## 任务 5 — 创建输出并验证资源地址稳定性
-
-创建以下输出：
-
-* `normalized_rules`
-* `ingress_rule_keys`
-* `rules_by_destination`
-* `rules_count_by_protocol`
-* `source_types`
-* `created_rule_ids`
-
-这些输出应能够用于确认以下结果：
-
-* 一共有 10 条已启用的入站规则；
-* 有两个不同来源为控制安全组创建了 TCP/8082 入站规则；
-* 出站规则和被禁用的规则均已被排除；
-* CSV、JSON 和 YAML 三种输入格式能够产生相同的逻辑结果。
-
-成功执行 `apply` 后，运行输入顺序打乱脚本，然后再次生成执行计划：
-
-```bash
-../scripts/shuffle-input.sh student
-terraform plan -var='rules_format=csv'
-```
-
-PowerShell：
-
-```powershell
-../scripts/shuffle-input.ps1 -Target student
-terraform plan -var='rules_format=csv'
-```
-
-无论三个输入文件中的数组顺序如何调整，都不得改变 Terraform 资源地址，也不得导致已有规则被替换。
-
 ## 完成标准
 
 完成后的提交应通过以下检查：
