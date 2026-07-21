@@ -1,4 +1,4 @@
-bucket = "RUN_SETUP_FIRST-tfstate"
+bucket = "tfpro-lab04-tfstate"
 key    = "tfpro-sim/lab-04/terraform.tfstaet"
 region = "eu-west-1"
 
