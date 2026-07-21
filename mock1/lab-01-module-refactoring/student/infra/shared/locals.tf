@@ -98,19 +98,4 @@ locals {
       }
     }
   }
-
-  instances = {
-    gateway = {
-      subnet_key          = "north"
-      subnet_index        = 0
-      security_group_keys = toset(["edge", "ops"])
-      instance_type       = "t3.micro"
-    }
-    worker = {
-      subnet_key          = "south"
-      subnet_index        = 1
-      security_group_keys = toset(["service"])
-      instance_type       = "t3.micro"
-    }
-  }
 }

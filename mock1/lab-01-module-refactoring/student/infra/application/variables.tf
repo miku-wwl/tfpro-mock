@@ -1,0 +1,25 @@
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "localstack_endpoint" {
+  type    = string
+  default = "http://localhost:4566"
+}
+
+variable "localstack_access_key" {
+  type    = string
+  default = "test"
+}
+
+variable "localstack_secret_key" {
+  type      = string
+  sensitive = true
+  default   = "test"
+}
+
+variable "ami_id" {
+  type    = string
+  default = "ami-e166082a"
+}
