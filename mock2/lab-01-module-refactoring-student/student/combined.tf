@@ -20,9 +20,9 @@ resource "aws_vpc" "fabric" {
   enable_dns_support   = true
 
   tags = {
-    Name       = "${local.name_prefix}-vpc"
-    Lab        = "tfpro-state-addresses"
-    ManagedBy  = "terraform"
+    Name      = "${local.name_prefix}-vpc"
+    Lab       = "tfpro-state-addresses"
+    ManagedBy = "terraform"
   }
 
   lifecycle {
@@ -69,13 +69,14 @@ resource "aws_security_group" "tier" {
 resource "aws_vpc_security_group_ingress_rule" "path" {
   for_each = var.ingress_rules
 
-  security_group_id            = aws_security_group.tier[each.value.destination].id
-  referenced_security_group_id = each.value.source == null ? null : aws_security_group.tier[each.value.source].id
-  cidr_ipv4                     = each.value.source == null ? each.value.cidr : null
-  from_port                     = each.value.from_port
-  to_port                       = each.value.to_port
-  ip_protocol                   = each.value.protocol
-  description                   = each.value.description
+  security_group_id = aws_security_group.tier[each.value.destination].id
+  # LocalStack persists peer security-group references with its account prefix.
+  referenced_security_group_id = each.value.source == null ? null : "000000000000/${aws_security_group.tier[each.value.source].id}"
+  cidr_ipv4                    = each.value.source == null ? each.value.cidr : null
+  from_port                    = each.value.from_port
+  to_port                      = each.value.to_port
+  ip_protocol                  = each.value.protocol
+  description                  = each.value.description
 
   tags = {
     Name = each.key
@@ -132,9 +133,9 @@ resource "aws_instance" "node" {
   iam_instance_profile   = aws_iam_instance_profile.workload.name
 
   tags = {
-    Name     = "${local.name_prefix}-${each.key}"
-    NodeKey  = each.key
-    Lab      = "tfpro-state-addresses"
+    Name    = "${local.name_prefix}-${each.key}"
+    NodeKey = each.key
+    Lab     = "tfpro-state-addresses"
   }
 
   depends_on = [aws_vpc_security_group_ingress_rule.path]

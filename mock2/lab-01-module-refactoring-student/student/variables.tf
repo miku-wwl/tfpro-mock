@@ -136,9 +136,9 @@ variable "ingress_rules" {
 variable "instances" {
   description = "Existing compute nodes keyed by stable string addresses."
   type = map(object({
-    subnet_key         = string
+    subnet_key          = string
     security_group_keys = set(string)
-    instance_type      = string
+    instance_type       = string
   }))
 
   default = {
