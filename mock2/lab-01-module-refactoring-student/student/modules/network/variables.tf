@@ -7,7 +7,7 @@ variable "vpc_cidr" {
 }
 
 variable "segment_specs" {
-  type = list(object({
+  type = map(object({
     key  = string
     cidr = string
     az   = string

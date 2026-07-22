@@ -3,5 +3,5 @@ output "vpc_id" {
 }
 
 output "subnet_ids_by_key" {
-  value = aws_subnet.segment[*].id
+  value = { for key, subnet in aws_subnet.segment : key => subnet.id }
 }

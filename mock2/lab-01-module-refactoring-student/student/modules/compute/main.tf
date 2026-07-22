@@ -3,7 +3,7 @@ resource "aws_instance" "node" {
 
   ami = var.ami_id
 
-  instance_type = each.value.instance_size
+  instance_type = each.value.instance_type
 
   subnet_id = var.subnet_ids_by_key[each.value.subnet_key]
   vpc_security_group_ids = [

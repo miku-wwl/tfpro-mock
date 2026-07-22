@@ -10,7 +10,7 @@ variable "nodes" {
   type = map(object({
     subnet_key          = string
     security_group_keys = set(string)
-    flavor              = string
+    instance_type       = string
   }))
 }
 

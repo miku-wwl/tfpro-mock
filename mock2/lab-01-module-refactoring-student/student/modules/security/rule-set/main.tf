@@ -2,7 +2,7 @@ resource "aws_vpc_security_group_ingress_rule" "path" {
   for_each = var.rules
 
   security_group_id            = var.group_ids[each.value.destination]
-  referenced_security_group_id = each.value.source == null ? null : var.group_ids[each.value.source]
+  referenced_security_group_id = each.value.source == null ? null : "000000000000/${var.group_ids[each.value.source]}"
   cidr_ipv4                     = each.value.source == null ? each.value.cidr : null
   from_port                     = each.value.from_port
   to_port                       = each.value.to_port

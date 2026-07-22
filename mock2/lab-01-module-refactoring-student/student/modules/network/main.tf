@@ -15,15 +15,15 @@ resource "aws_vpc" "fabric" {
 }
 
 resource "aws_subnet" "segment" {
-  count = length(var.segment_specs)
+  for_each = var.segment_specs
 
   vpc_id            = aws_vpc.fabric.id
-  cidr_block        = var.segment_specs[count.index].cidr
-  availability_zone = var.segment_specs[count.index].az
+  cidr_block        = each.value.cidr
+  availability_zone = each.value.az
 
   tags = {
-    Name       = "${var.name_seed}-${var.segment_specs[count.index].key}"
-    SegmentKey = var.segment_specs[count.index].key
+    Name       = "${var.name_seed}-${each.key}"
+    SegmentKey = each.key
     Lab        = "tfpro-state-addresses"
   }
 
