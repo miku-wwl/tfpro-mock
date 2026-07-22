@@ -49,12 +49,6 @@ resource "aws_s3_object" "base" {
   content_type = "text/plain"
 }
 
-resource "aws_s3_object" "retained" {
-  bucket       = "${var.lab_prefix}-assets"
-  key          = "retained.txt"
-  content      = "KEEP-ME"
-  content_type = "text/plain"
-}
 
 resource "aws_iam_user" "members" {
   for_each = local.users
