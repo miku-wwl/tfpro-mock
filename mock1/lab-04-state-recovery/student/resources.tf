@@ -49,6 +49,13 @@ resource "aws_s3_object" "base" {
   content_type = "text/plain"
 }
 
+resource "aws_s3_object" "new" {
+  bucket       = "${var.lab_prefix}-assets"
+  key          = "new.txt"
+  content      = "Success"
+  content_type = "text/plain"
+}
+
 
 resource "aws_iam_user" "members" {
   for_each = local.users
@@ -84,4 +91,33 @@ resource "aws_security_group_rule" "inbound" {
   from_port         = each.value.port
   to_port           = each.value.port
   cidr_blocks       = [each.value.cidr]
+}
+
+
+resource "local_file" "s3" {
+  filename = "${path.module}/generated/s3.txt"
+
+  content = "${join("\n", sort([
+    aws_s3_bucket.assets.bucket,
+    aws_s3_bucket.logs.bucket,
+  ]))}\n"
+}
+
+resource "local_file" "iam_users" {
+  filename = "${path.module}/generated/iam-users.txt"
+
+  content = "${join("\n", sort([
+    for user in aws_iam_user.members : user.name
+  ]))}\n"
+}
+
+resource "local_file" "security" {
+  filename = "${path.module}/generated/security.txt"
+
+  content = "${join("\n", concat(
+    [aws_security_group.application.id],
+    sort([
+      for rule in aws_security_group_rule.inbound : rule.security_group_rule_id
+    ]),
+  ))}\n"
 }
