@@ -1,4 +1,6 @@
 resource "aws_iam_user" "pipeline_identity" {
+  provider = aws.identity
+
   name = "lab02-pipeline-identity"
 
   lifecycle {
@@ -7,6 +9,8 @@ resource "aws_iam_user" "pipeline_identity" {
 }
 
 resource "aws_iam_user" "service_accounts" {
+  provider = aws.identity
+
   count = length(var.service_accounts)
   name  = var.service_accounts[count.index].name
 

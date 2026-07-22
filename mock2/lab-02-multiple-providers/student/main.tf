@@ -1,14 +1,20 @@
 data "aws_caller_identity" "current" {
-  provider = aws.identity
+  provider = aws.readonly
 }
 
 module "compute" {
+  providers = {
+    aws.compute = aws.compute
+  }
   source = "./modules/compute"
 
   group_name = "lab02-capacity-group"
 }
 
 module "identity" {
+  providers = {
+    aws.identity = aws.identity
+  }
   source = "./modules/identity"
 
   service_accounts = [
@@ -19,7 +25,9 @@ module "identity" {
 
 module "storage" {
   source = "./modules/storage"
-
+  providers = {
+    aws.compute = aws.compute
+  }
   bucket_name = aws_s3_bucket.artifact_store.id
 }
 
