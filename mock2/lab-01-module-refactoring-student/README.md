@@ -1,30 +1,30 @@
-# Terraform Professional Simulation — Lab 01: State-Safe Module Refactoring
+# Terraform Professional 模拟练习 — Lab 01：安全重构模块与 State
 
-> Independent practice material. This is not an official HashiCorp exam question.
+> 本练习为独立的学习材料，并非 HashiCorp 官方考试题目。
 
-## Scenario
+## 场景
 
-A platform team owns a working but tightly coupled Terraform root module. All infrastructure already exists in the target account, and the current local state matches the legacy configuration. The team wants two independently operated root modules without changing any remote object.
+一个平台团队维护着一套可正常运行、但耦合紧密的 Terraform 根模块。所有基础设施都已存在于目标账户中，当前本地 state 与旧配置完全一致。团队希望将其拆分成两个可独立运维的根模块，同时不得改变任何远程对象。
 
-You have **70–80 minutes**. Treat any create, delete, or replacement proposal for a pre-existing object as a failed migration.
+你有 **70–80 分钟** 完成练习。对于任何已有对象，只要 plan 提议 create、delete 或 replacement，均视为迁移失败。
 
-## Environment
+## 环境
 
 - Terraform CLI 1.11.x
-- Docker Desktop with Docker Compose
+- 已安装 Docker Compose 的 Docker Desktop
 - LocalStack
-- Bash or Windows PowerShell
+- Bash 或 Windows PowerShell
 
-Run the provided setup script before starting. The script creates the pre-existing resources, copies the matching state into `student/`, and records real baseline identifiers. Do not place real AWS credentials anywhere in this lab.
+开始前请运行提供的初始化脚本。该脚本会创建已有资源、将匹配的 state 复制到 `student/`，并记录真实的基线 ID。不得在本 Lab 的任何位置写入真实 AWS 凭证。
 
-## Starting Point
+## 初始状态
 
-- `student/combined.tf` is the active, valid monolithic configuration.
-- `student/infra/` and `student/modules/` contain an incomplete refactoring draft. The draft is intentionally not connected to the active root module and contains several dependency and type defects.
-- Every managed object is protected against destruction.
-- The initial active root module must produce a clean plan before you change it.
+- `student/combined.tf` 是当前生效且有效的单体配置。
+- `student/infra/` 和 `student/modules/` 中包含一份未完成的重构草稿。该草稿尚未接入当前根模块，并且刻意包含若干依赖关系和类型缺陷。
+- 所有受管理对象都受到保护，不能被销毁。
+- 在修改前，当前生效的根模块必须产生无变更的 plan。
 
-## Required Final Layout
+## 最终目录结构
 
 ```text
 student/
@@ -38,106 +38,106 @@ student/
     └── compute/
 ```
 
-Nested implementation inside one of these modules is allowed when it preserves clear ownership.
+只要所有权边界清晰，允许在上述模块内部继续嵌套实现。
 
-## Task 1 — Establish the Baseline
+## 任务 1 — 建立基线
 
-1. Inspect the active configuration and current state.
-2. Confirm that the initial plan has no infrastructure actions.
-3. Record all ordinary, indexed, keyed, module-ready, and nested-module resource addresses in `student/ADDRESS-WORKSHEET.md`.
-4. Record the baseline IDs produced by setup.
-5. Do not continue if any pre-existing object is already proposed for creation, deletion, or replacement.
+1. 检查当前生效的配置和 state。
+2. 确认初始 plan 不包含任何基础设施变更。
+3. 将所有普通、带索引、带 key、可迁移至 module 的资源地址，以及嵌套 module 的资源地址，记录到 `student/ADDRESS-WORKSHEET.md`。
+4. 记录初始化脚本生成的基线 ID。
+5. 如果任何已有对象被计划创建、删除或替换，不得继续后续任务。
 
-## Task 2 — Refactor into Child Modules
+## 任务 2 — 重构为子模块
 
-Create and connect the four required child modules.
+创建并接入以下四个必需的子模块：
 
-- `network` owns the VPC and subnets.
-- `security` owns the security groups and ingress rules.
-- `identity` owns the IAM role and instance profile.
-- `compute` owns the EC2 instances.
+- `network`：管理 VPC 和子网。
+- `security`：管理 security group 和 ingress rule。
+- `identity`：管理 IAM role 和 instance profile。
+- `compute`：管理 EC2 instance。
 
-Each required module must contain `main.tf`, `variables.tf`, and `outputs.tf`. Child modules must not reach into sibling module internals. Pass all cross-module values through root-module inputs and outputs. Do not hard-code remote IDs.
+每个必需模块都必须包含 `main.tf`、`variables.tf` 和 `outputs.tf`。子模块不得直接访问兄弟模块的内部资源；所有跨模块值都必须通过根模块的输入与输出传递。不得硬编码远程 ID。
 
-The final shared root must call the network module with the module name `shared`. The final application root must call the identity module with the module name `application`.
+最终的 shared 根模块必须以 `shared` 作为模块名称调用 network 模块；最终的 application 根模块必须以 `application` 作为模块名称调用 identity 模块。
 
-## Task 3 — Repair Dependencies and Contracts
+## 任务 3 — 修复依赖关系与模块契约
 
-Repair every defect in the draft while preserving the existing remote configuration.
+在保留现有远程配置的前提下，修复草稿中的所有缺陷。
 
-The final design must satisfy all of the following:
+最终设计必须满足以下所有要求：
 
-- The security module receives the VPC ID through an input.
-- The compute module receives subnet IDs as a **map keyed by segment name**.
-- The compute module receives security group IDs as a map.
-- The compute module receives the instance profile name through an input.
-- The identity module receives the shared naming token through an input.
-- At least one module consumes a map output from another module through the root module.
-- The final subnet collection is keyed by stable segment names and is independent of the original list order.
-- The legacy ordered subnet output is replaced by a keyed map contract.
+- security 模块通过输入变量接收 VPC ID。
+- compute 模块接收一个**以网段名称为 key 的 map**形式的 subnet ID。
+- compute 模块以 map 形式接收 security group ID。
+- compute 模块通过输入变量接收 instance profile 名称。
+- identity 模块通过输入变量接收 shared naming token。
+- 至少有一个模块通过根模块消费另一个模块输出的 map。
+- 最终 subnet 集合必须以稳定的网段名称作为 key，且不依赖原始 list 的顺序。
+- 原先有序的 subnet output 必须替换为以 key 为基础的 map 契约。
 
-## Task 4 — Preserve Resource Identity While Changing Addresses
+## 任务 4 — 在修改地址时保留资源身份
 
-Move the existing objects to their final ownership without recreating them.
+将已有对象迁移至其最终所有者，且不得重新创建资源。
 
-Your final state layout must cover:
+最终 state 结构必须覆盖：
 
-- an ordinary resource address;
-- an indexed resource address converted to stable keyed instances;
-- keyed resource instances containing hyphens or composite strings;
-- a root resource owned by `module.shared`;
-- a root resource owned by `module.application`;
-- at least one nested module address.
+- 一个普通资源地址；
+- 一个从索引地址转换为稳定 key 实例的资源地址；
+- 包含连字符或复合字符串的带 key 资源实例；
+- 一个由 `module.shared` 持有的根资源；
+- 一个由 `module.application` 持有的根资源；
+- 至少一个嵌套 module 地址。
 
-The README intentionally states only the required result. Select appropriate Terraform state and configuration mechanisms yourself. Do not edit state JSON directly.
+README 只说明最终结果；请自行选择合适的 Terraform state 与配置机制。不得直接编辑 state JSON。
 
-## Task 5 — Split the Root Modules and States
+## 任务 5 — 拆分根模块与 State
 
-Create two independent root modules:
+创建两个彼此独立的根模块：
 
-### Shared root
+### Shared 根模块
 
-Path: `student/infra/shared`
+路径：`student/infra/shared`
 
-Owns:
+管理以下内容：
 
-- shared naming;
-- network;
-- security;
-- artifact bucket and retained object;
-- remote-state bucket.
+- 共享命名；
+- network；
+- security；
+- artifact bucket 和 retained object；
+- remote-state bucket。
 
-Its S3 backend key must be exactly:
+其 S3 backend key 必须精确为：
 
 ```text
 tfpro-sim/lab-01/shared.tfstate
 ```
 
-### Application root
+### Application 根模块
 
-Path: `student/infra/application`
+路径：`student/infra/application`
 
-Owns:
+管理以下内容：
 
-- identity;
-- compute.
+- identity；
+- compute。
 
-Its S3 backend key must be exactly:
+其 S3 backend key 必须精确为：
 
 ```text
 tfpro-sim/lab-01/application.tfstate
 ```
 
-The application root must read the shared contract through `terraform_remote_state`. Only a root module may access remote state. No child module may access it.
+application 根模块必须通过 `terraform_remote_state` 读取 shared 模块输出的契约。只有根模块可以访问 remote state，子模块不得访问。
 
-At the end, a resource may be managed by only one state. Shared resources must not remain in the application state, and application resources must not remain in the shared state.
+最终每个资源只能由一个 state 管理。shared 资源不得继续留在 application state 中，application 资源也不得继续留在 shared state 中。
 
-## Completion Conditions
+## 完成条件
 
-- Both final root modules initialize successfully.
-- Both final root modules validate successfully.
-- Both final plans show **0 to add, 0 to change, 0 to destroy**.
-- No pre-existing resource ID changes.
-- No legacy address remains.
-- No broad `ignore_changes` rule is used to hide drift.
-- No real credentials or provider binaries are added to the submission.
+- 两个最终根模块均可成功初始化。
+- 两个最终根模块均可成功通过验证。
+- 两个最终 plan 均显示 **0 to add, 0 to change, 0 to destroy**。
+- 所有已有资源的 ID 均未发生变化。
+- 不保留任何旧资源地址。
+- 不得使用宽泛的 `ignore_changes` 规则掩盖 drift。
+- 提交内容中不得包含真实凭证或 provider 二进制文件。
