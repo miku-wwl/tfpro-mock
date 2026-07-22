@@ -3,7 +3,7 @@ locals {
   users = {
     alpha = "${var.lab_prefix}-alpha"
     beta  = "${var.lab_prefix}-beta"
-    gama  = "${var.lab_prefix}-gamma"
+    gamma = "${var.lab_prefix}-gamma"
   }
 
   ingress_rules = {
@@ -21,12 +21,11 @@ locals {
 }
 
 resource "aws_s3_bucket" "assets" {
-  # This physical name does not match the existing assets bucket.
-  bucket        = "${var.lab_prefix}-asset-store"
+  bucket        = "${var.lab_prefix}-assets"
   force_destroy = false
 
   tags = {
-    Name      = "${var.lab_prefix}-asset-store"
+    Name      = "${var.lab_prefix}-assets"
     Purpose   = "artifact-storage"
     ManagedBy = "terraform"
   }
