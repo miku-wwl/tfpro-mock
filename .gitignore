@@ -1,6 +1,9 @@
 # Local .terraform directories
 .terraform/
 
+# Temporary Terraform bootstrap directories
+.bootstrap/
+
 # .tfstate files
 *.tfstate
 *.tfstate.*

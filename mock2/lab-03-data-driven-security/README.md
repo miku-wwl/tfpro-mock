@@ -1,25 +1,25 @@
-# Lab 03 — Data-Driven Security Rules
+# Lab 03 — 数据驱动的安全组规则
 
-## Scenario
+## 场景
 
-A platform team already operates a small network baseline in LocalStack. The VPC, two subnets, and three security groups already exist. Your job is to read a rule catalogue supplied in CSV, JSON, or YAML, normalize it into one Terraform shape, and create only the enabled ingress rules.
+平台团队已经在 LocalStack 中维护了一套基础网络环境，包括一个 VPC、两个子网和三个安全组。你的任务是读取 `CSV`、`JSON` 或 `YAML` 格式的规则目录，将数据统一转换成 Terraform 使用的结构，并且只为启用的入站规则创建资源。
 
-This is an original practice lab. It is not an official exam question and does not claim to reproduce one.
+这是一个原创练习实验，并非官方考试题，也不声称复现官方考试内容。
 
-**Target time:** 45–55 minutes  
-**Target difficulty:** Terraform Professional, 92–96/100
+目标用时：45–55 分钟  
+目标难度：Terraform Professional，92–96/100
 
-## Environment
+## 环境要求
 
 - Terraform CLI 1.11.x
-- Docker Desktop with Docker Compose
+- Docker Desktop 和 Docker Compose
 - LocalStack
-- Bash or PowerShell
-- Python 3 only for the input-shuffle helper
+- Bash 或 PowerShell
+- Python 3（仅用于打乱输入文件顺序的辅助脚本）
 
-## Start the lab
+## 开始实验
 
-Bash:
+Bash：
 
 ```bash
 ./scripts/setup.sh
@@ -27,7 +27,7 @@ cd student
 terraform plan
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/setup.ps1
@@ -35,42 +35,42 @@ Set-Location student
 terraform plan
 ```
 
-The bootstrap configuration creates the baseline. Do not recreate the VPC, subnets, or security groups in `student/`.
+初始化配置会创建基线环境。不要在 `student/` 中重新创建 VPC、子网或安全组。
 
-## Baseline resources
+## 基线资源
 
-The environment contains:
+环境中已经存在以下资源：
 
-- one VPC;
-- a `public` subnet;
-- an `administration` subnet;
-- a `frontend` security group;
-- a `datastore` security group;
-- an `operations` security group.
+- 一个 VPC；
+- 一个 `public` 子网；
+- 一个 `administration` 子网；
+- 一个 `frontend` 安全组；
+- 一个 `datastore` 安全组；
+- 一个 `operations` 安全组。
 
-Discover their identifiers and subnet CIDRs through data sources. Do not hardcode generated IDs.
+请通过 data source 查询它们的 ID 和子网 CIDR，不要硬编码初始化时生成的 ID。
 
-## Task 1 — Read external data
+## 任务 1 — 读取外部数据
 
-Define `variable "rules_format"` with these accepted values:
+定义变量 `rules_format`，允许的值为：
 
 - `csv`
 - `json`
 - `yaml`
 
-The default must be `csv`.
+默认值必须是 `csv`。
 
-Read the matching file from `data/`:
+根据变量读取 `data/` 目录下对应的文件：
 
-- CSV with `csvdecode`;
-- JSON with `jsondecode`;
-- YAML with `yamldecode`.
+- CSV 使用 `csvdecode`；
+- JSON 使用 `jsondecode`；
+- YAML 使用 `yamldecode`。
 
-Use one downstream rule-processing path. Do not create three copies of the security-group-rule resource.
+三种格式必须进入同一条后续规则处理流程，不要为每种格式分别创建一套安全组规则资源。
 
-## Task 2 — Normalize the input
+## 任务 2 — 统一输入结构
 
-Create `local.normalized_rules`. Every element must have this consistent object shape:
+创建 `local.normalized_rules`。其中每个元素必须具有以下结构：
 
 - `direction`
 - `source`
@@ -82,45 +82,45 @@ Create `local.normalized_rules`. Every element must have this consistent object 
 - `description`
 - `enabled`
 
-Normalization requirements:
+统一处理要求：
 
-- ports become `number` or `null`;
-- `enabled` becomes `bool`;
-- protocol and direction use a consistent case;
-- CSV, JSON, and YAML produce equivalent normalized values;
-- do not special-case individual row numbers.
+- 端口必须转换为 `number` 或 `null`；
+- `enabled` 必须转换为 `bool`；
+- `protocol` 和 `direction` 必须统一大小写；
+- CSV、JSON 和 YAML 应产生等价的规范化结果；
+- 不得针对某一行数据编写特殊处理逻辑。
 
-## Task 3 — Filter rules
+## 任务 3 — 过滤规则
 
-Keep only rules where:
+只保留同时满足以下条件的规则：
 
-- `direction` is `ingress`;
-- `enabled` is `true`.
+- `direction` 为 `ingress`；
+- `enabled` 为 `true`。
 
-The egress row and disabled ingress row must not create resources.
+因此，egress 规则和被禁用的 ingress 规则都不得创建资源。
 
-## Task 4 — Create security-group rules
+## 任务 4 — 创建安全组规则
 
-Use exactly one `aws_vpc_security_group_ingress_rule` resource block.
+只能使用一个 `aws_vpc_security_group_ingress_rule` 资源块。
 
-Requirements:
+要求：
 
-- use `for_each` and a `for` expression;
-- do not use `count`;
-- do not create one resource block per input row;
-- do not use the list position as the long-lived resource key;
-- keys must be unique, stable, and independent of input order;
-- keys must distinguish source, destination, protocol, `from_port`, and `to_port`;
-- two rules targeting `operations` on TCP/8082 must coexist because their sources differ;
-- another rule intentionally shares source, destination, and port with one TCP/8082 rule but uses UDP;
-- when `source` is `-`, resolve `source_selector` to a subnet CIDR and set only `cidr_ipv4`;
-- when `source` is a security-group role, set only `referenced_security_group_id`;
-- `cidr_ipv4` and `referenced_security_group_id` must be mutually exclusive;
-- protocol `-1` must use the provider-compatible representation for ports.
+- 使用 `for_each` 和 `for` 表达式；
+- 不得使用 `count`；
+- 不得为每一行输入数据单独创建资源块；
+- 不得使用输入列表的位置作为长期资源 key；
+- key 必须唯一、稳定，并且与输入顺序无关；
+- key 必须区分 source、destination、protocol、`from_port` 和 `to_port`；
+- `operations` 上的两个 TCP/8082 规则必须同时存在，因为它们的来源安全组不同；
+- 另有一条规则会与某条 TCP/8082 规则共享 source、destination 和端口，但协议为 UDP；
+- 当 `source` 为 `-` 时，将 `source_selector` 解析为子网 CIDR，并且只设置 `cidr_ipv4`；
+- 当 `source` 是安全组角色时，只设置 `referenced_security_group_id`；
+- `cidr_ipv4` 和 `referenced_security_group_id` 必须互斥；
+- 当协议为 `-1` 时，必须使用 provider 兼容的端口表示方式。
 
-## Task 5 — Outputs
+## 任务 5 — 输出结果
 
-Create these outputs:
+创建以下 output：
 
 - `normalized_rules`
 - `ingress_rule_keys`
@@ -129,11 +129,13 @@ Create these outputs:
 - `source_types`
 - `created_rule_ids`
 
-`ingress_rule_keys` must make it possible to verify that the two TCP/8082 rules for `operations` have different addresses.
+`ingress_rule_keys` 必须能够验证 `operations` 上两条 TCP/8082 规则具有不同的资源地址。
 
-## Task 6 — Prove address stability
+## 任务 6 — 验证资源地址稳定性
 
-After a successful apply, shuffle the order of all three data files:
+成功 apply 后，打乱三个输入文件中所有规则的顺序：
+
+Bash：
 
 ```bash
 ../scripts/shuffle-input.sh
@@ -142,7 +144,7 @@ terraform plan -var='rules_format=json'
 terraform plan -var='rules_format=yaml'
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ../scripts/shuffle-input.ps1
@@ -151,22 +153,22 @@ terraform plan -var='rules_format=json'
 terraform plan -var='rules_format=yaml'
 ```
 
-Changing input order must not change resource addresses, delete rules, or recreate rules. A completed format should converge to a clean plan.
+改变输入顺序不得改变资源地址，也不得删除或重新创建规则。三种格式最终都应收敛到无变更的 plan。
 
-## Completion conditions
+## 完成条件
 
-A completed solution should show:
+完成后的结果应满足：
 
-- 10 enabled ingress rules;
-- protocol counts of 8 TCP, 1 UDP, and 1 all-protocol rule;
-- two TCP/8082 rules for `operations` with different source security groups;
-- no egress or disabled rule;
-- no resource address churn after shuffling;
-- a final plan of `0 to add, 0 to change, 0 to destroy` after apply.
+- 创建 10 条启用的 ingress 规则；
+- 协议数量为：TCP 8 条、UDP 1 条、全协议 1 条；
+- `operations` 上存在两条来源安全组不同的 TCP/8082 规则；
+- 不创建 egress 规则或被禁用的规则；
+- 打乱输入顺序后，资源地址不发生变化；
+- apply 后最终 plan 为：`0 to add, 0 to change, 0 to destroy`。
 
-## Reset
+## 重置环境
 
-The baseline resources use `prevent_destroy`. The reset scripts stop and remove the ephemeral LocalStack environment, then delete only local generated state and cache files.
+基线资源设置了 `prevent_destroy`。重置脚本会停止并删除临时 LocalStack 环境，然后只删除本地生成的 state 和缓存文件。
 
 ```bash
 ./scripts/reset.sh
