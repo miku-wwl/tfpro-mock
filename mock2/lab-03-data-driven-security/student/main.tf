@@ -3,7 +3,7 @@ resource "aws_vpc_security_group_ingress_rule" "catalogue" {
 
   security_group_id = each.value.destination == "operations" ? "sg-0123456789abcdef0" : data.aws_security_group.selected[each.value.destination].id
 
-  cidr_ipv4                   = each.value.source == "-" ? "10.73.10.0/24" : each.value.source
+  cidr_ipv4                    = each.value.source == "-" ? "10.73.10.0/24" : each.value.source
   referenced_security_group_id = data.aws_security_group.selected[each.value.source].id
 
   ip_protocol = each.value.protocol
