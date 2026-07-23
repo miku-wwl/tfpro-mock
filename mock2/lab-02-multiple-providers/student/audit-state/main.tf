@@ -11,9 +11,9 @@ terraform {
 
 provider "aws" {
   region                      = "us-east-1"
-  profile                     = "compute_operator"
-  shared_config_files         = ["${path.module}/../aws/config"]
-  shared_credentials_files    = ["${path.module}/../.aws/credentials.txt"]
+  profile                     = "compute-operator"
+  shared_config_files         = ["${path.module}/../.aws/config"]
+  shared_credentials_files    = ["${path.module}/../.aws/credentials"]
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_region_validation      = true
@@ -32,4 +32,9 @@ resource "aws_s3_bucket" "audit_archive" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+import {
+  id = "tfpro-lab02-audit-archive"
+  to = aws_s3_bucket.audit_archive
 }

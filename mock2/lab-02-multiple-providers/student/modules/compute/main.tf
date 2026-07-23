@@ -25,6 +25,6 @@ resource "aws_autoscaling_group" "capacity_group" {
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [max_size]
+    ignore_changes  = [desired_capacity]
   }
 }

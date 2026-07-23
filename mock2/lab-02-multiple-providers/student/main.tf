@@ -17,10 +17,14 @@ module "identity" {
   }
   source = "./modules/identity"
 
-  service_accounts = [
-    { key = "batch-worker-prod", name = "lab02-batch-worker" },
-    { key = "api-gateway", name = "lab02-api-service" },
-  ]
+  service_accounts = {
+    "batch-worker-prod" = {
+      name = "lab02-batch-worker"
+    }
+    "api-gateway" = {
+      name = "lab02-api-service"
+    }
+  }
 }
 
 module "storage" {

@@ -11,8 +11,8 @@ resource "aws_iam_user" "pipeline_identity" {
 resource "aws_iam_user" "service_accounts" {
   provider = aws.identity
 
-  count = length(var.service_accounts)
-  name  = var.service_accounts[count.index].name
+  for_each = var.service_accounts
+  name     = each.value.name
 
   lifecycle {
     prevent_destroy = true
@@ -20,5 +20,8 @@ resource "aws_iam_user" "service_accounts" {
 }
 
 output "service_account_names" {
-  value = aws_iam_user.service_accounts[*].name
+
+  value = {
+    for key, user in aws_iam_user.service_accounts : key => user.name
+  }
 }

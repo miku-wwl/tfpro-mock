@@ -1,6 +1,5 @@
 variable "service_accounts" {
-  type = list(object({
-    key  = string
+  type = map(object({
     name = string
   }))
 }
