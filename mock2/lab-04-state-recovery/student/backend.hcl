@@ -1,7 +1,9 @@
-bucket = "generated-by-setup"
-key = "tfpro-sim/lab-04/auxiliary-state.tfstate"
+bucket = "tfpro-sim"
+key    = "tfpro-sim/lab-04/terraform.tfstate"
 region = "us-west-2"
-endpoints = { s3 = "http://localhost:4567" }
+endpoints = {
+  s3 = "http://localhost:4566"
+}
 use_path_style = true
 skip_credentials_validation = true
 skip_metadata_api_check = true

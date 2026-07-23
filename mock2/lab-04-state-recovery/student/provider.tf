@@ -8,9 +8,9 @@ provider "aws" {
   skip_requesting_account_id  = true
 
   endpoints {
-    ec2 = "http://localhost:4567"
-    iam = "http://localhost:4567"
-    s3  = "http://localhost:4567"
-    sts = "http://localhost:4567"
+    ec2 = "http://localhost:4566"
+    iam = "http://localhost:4566"
+    s3  = "http://localhost:4566"
+    sts = "http://localhost:4566"
   }
 }
