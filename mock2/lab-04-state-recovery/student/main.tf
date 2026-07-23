@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "assets" {
-  bucket = "${var.assets_bucket_name}-replacement"
+  bucket = var.assets_bucket_name
   tags   = local.common_tags
 
   lifecycle {
@@ -68,8 +68,8 @@ resource "aws_iam_user" "members" {
 
 resource "aws_security_group" "application" {
   name        = "${var.name_prefix}-application"
-  description = "Temporary description"
-  vpc_id      = "vpc-00000000000000000"
+  description = "Application security group"
+  vpc_id      = var.vpc_id
   tags        = local.common_tags
 
   lifecycle {

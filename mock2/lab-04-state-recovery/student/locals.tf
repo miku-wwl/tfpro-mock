@@ -6,9 +6,9 @@ locals {
   }
 
   members = {
-    alpha       = "${var.name_prefix}-alpha"
-    beta        = "${var.name_prefix}-beta"
-    "gamma-ops" = "${var.name_prefix}-gamma"
+    alpha = "${var.name_prefix}-alpha"
+    beta  = "${var.name_prefix}-beta"
+    gamma = "${var.name_prefix}-gamma"
   }
 
   seed_objects = {
