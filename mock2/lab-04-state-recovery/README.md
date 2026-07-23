@@ -1,69 +1,69 @@
-# Lab 04 — State Recovery and Address Preservation
+# Lab 04 — State 恢复与资源地址保留
 
-> Independent Terraform Professional-style practice lab. This is not an official exam question.
+> 这是一个独立的 Terraform Professional 风格练习实验，并非官方考试题。
 
-## Objective
+## 实验目标
 
-Recover a deliberately inconsistent Terraform workspace without deleting or replacing any pre-existing cloud resource. The exercise is designed for **45–55 minutes** and assumes Terraform CLI 1.11.x, Docker Desktop, Docker Compose, LocalStack, Bash or PowerShell.
+恢复一个故意设计为不一致的 Terraform 工作区，同时不得删除或替换任何已经存在的云资源。本实验预计用时 **45–55 分钟**，环境要求为 Terraform CLI 1.11.x、Docker Desktop、Docker Compose、LocalStack，以及 Bash 或 PowerShell。
 
-The environment contains resources that are distributed across configuration, Terraform state, and LocalStack in different ways. Treat the saved baseline as the source of truth for resource identity.
+当前环境中的资源分散在配置、Terraform state 和 LocalStack 中，并且三者之间存在不一致。请以保存的基线数据作为资源身份的最终依据。
 
-## Safety rules
+## 安全规则
 
-- Never edit a `terraform.tfstate` file as JSON.
-- Do not delete, replace, or recreate any pre-existing bucket, IAM user, security group, security-group rule, or object.
-- Do not use broad `ignore_changes` rules to hide drift.
-- Before any apply, inspect a saved plan and confirm that no pre-existing resource has a delete or replace action.
-- The final plans for both workspaces must be clean.
+- 不要把 `terraform.tfstate` 当作 JSON 直接编辑；
+- 不得删除、替换或重新创建任何已经存在的 bucket、IAM user、安全组、安全组规则或对象；
+- 不要使用宽泛的 `ignore_changes` 来掩盖 drift；
+- 每次 apply 前都要检查保存的 plan，确认没有已有资源会被删除或替换；
+- 最终两个工作区的 plan 都必须干净。
 
-## Start the lab
+## 开始实验
 
-Bash:
+Bash：
 
 ```bash
 ./scripts/setup.sh
 ./scripts/corrupt-state.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/setup.ps1
 ./scripts/corrupt-state.ps1
 ```
 
-The setup creates an isolated LocalStack environment, saves identity data under `bootstrap/baseline/`, and prepares a damaged local state in `student/`.
+初始化过程会创建隔离的 LocalStack 环境，将资源身份信息保存到 `bootstrap/baseline/`，并在 `student/` 中准备一份损坏的本地 state。
 
-## Required final backend
+## 最终 backend 要求
 
-The primary workspace must use the pre-created S3 backend bucket and this exact key:
+主工作区必须使用预先创建的 S3 backend bucket，并且使用以下精确 key：
 
 ```text
 tfpro-sim/lab-04/terraform.tfstate
 ```
 
-The auxiliary workspace under `student/auxiliary/` must use the same backend bucket and this exact key:
+`student/auxiliary/` 下的辅助工作区必须使用同一个 backend bucket，并使用以下精确 key：
 
 ```text
 tfpro-sim/lab-04/auxiliary.tfstate
 ```
 
-Both backend migrations must preserve the existing lineage, serial progression, and resource-to-address mapping. The final primary workspace must not continue using local state.
+迁移 backend 时必须保留原有的 lineage、serial 递增关系以及资源与地址之间的映射。最终主工作区不得继续使用本地 state。
 
-## Task 1 — Repair provider and backend configuration
+## 任务 1 — 修复 provider 和 backend 配置
 
-Repair the LocalStack provider settings and both backend configurations. Migrate the current local state records rather than creating a fresh empty remote state.
+修复 LocalStack provider 配置以及两个 backend 配置。迁移当前本地 state 中的记录，不要创建一个全新的空 remote state。
 
-Confirm before and after migration that:
+迁移前后都要确认：
 
-- the same real resources remain mapped;
-- the backend key is exact;
-- the state lineage is preserved;
-- backend migration itself does not create duplicate resources.
+- 相同的真实资源仍然由 state 管理；
+- backend key 完全正确；
+- state lineage 保持不变；
+- backend 迁移不会创建重复资源。
 
-## Task 2 — Adopt existing resources
+## 任务 2 — 接管已有资源
 
-Reconcile the configuration and state so the primary state contains all of these exact addresses:
+调整配置和 state，使主 state 最终包含以下精确地址：
 
 ```text
 aws_s3_bucket.assets
@@ -76,72 +76,72 @@ aws_vpc_security_group_ingress_rule.application["https-public"]
 aws_vpc_security_group_ingress_rule.application["ops-vpn"]
 ```
 
-The logs bucket, security group, and one ingress rule already exist in LocalStack. Derive their identifiers from the baseline and remote APIs. Do not create replacements.
+`logs` bucket、安全组和其中一条 ingress rule 已经存在于 LocalStack 中。请根据基线数据和远程 API 推导它们的标识符，不要创建替代资源。
 
-## Task 3 — Recover resource addresses without churn
+## 任务 3 — 恢复资源地址，避免资源变更
 
-The damaged state includes legacy ordinary addresses, count addresses, and addresses that no longer have matching configuration. Reach the final model without deleting and recreating the real resources.
+损坏的 state 中包含旧的普通地址、`count` 索引地址，以及已经没有对应配置的地址。需要在不删除或重新创建真实资源的前提下，恢复到最终模型。
 
-Required outcomes:
+必须满足：
 
-- the three independent IAM user addresses disappear;
-- IAM users are represented by the required `for_each` addresses;
-- the assets bucket legacy address disappears;
-- two count-indexed seed objects are represented by stable string-keyed `for_each` addresses;
-- the base object is managed inside `module.content`;
-- no real resource is simultaneously managed by two addresses;
-- every stale address is resolved safely.
+- 三个独立的 IAM user 地址消失；
+- IAM users 使用要求的 `for_each` 地址表示；
+- assets bucket 的旧地址消失；
+- 两个使用 `count` 索引的 seed object 迁移为稳定的字符串 key `for_each` 地址；
+- base object 由 `module.content` 管理；
+- 同一个真实资源不得同时由两个地址管理；
+- 每个过期地址都必须被安全处理。
 
-The final seed object addresses must be:
+最终 seed object 地址必须是：
 
 ```text
 aws_s3_object.seeded["warm-up"]
 aws_s3_object.seeded["cold-path"]
 ```
 
-Input ordering must not affect these addresses.
+输入顺序不得影响这些地址。
 
-## Task 4 — Split one resource into a second state
+## 任务 4 — 将一个资源拆分到第二个 state
 
-The existing manifest object begins in the primary local state at a root resource address. It must end in the auxiliary state at this multi-level module address:
+manifest object 初始位于主本地 state 的 root 资源地址。最终必须将它迁移到辅助 state 的多层 module 地址：
 
 ```text
 module.operations.module.inventory.aws_s3_object.manifest
 ```
 
-The object must remain the same remote object throughout the split. It must not remain in the primary state and must not be imported or managed twice.
+整个迁移过程中必须保持它是同一个远程对象。它不得继续存在于主 state，也不得被两个 state 同时导入或管理。
 
-The base object must end at this one-level module address in the primary state:
+base object 最终必须位于主 state 的以下一级 module 地址：
 
 ```text
 module.content.aws_s3_object.base
 ```
 
-## Task 5 — Stop managing retained.txt without deleting it
+## 任务 5 — 停止管理 retained.txt
 
-At completion:
+完成后必须满足：
 
-- the configuration block for `retained.txt` is absent;
-- its state address is absent;
-- the remote object still exists;
-- its content is still exactly `KEEP-ME`;
-- it was not deleted or recreated.
+- 配置中不再存在 `retained.txt` 的资源块；
+- state 中不存在它的地址；
+- 远程对象仍然存在；
+- 内容仍然精确为 `KEEP-ME`；
+- 对象没有被删除或重新创建。
 
-Simply deleting the block before reconciling state is unsafe.
+在没有先处理 state 的情况下直接删除资源块是不安全的。
 
-## Task 6 — Create one new managed object
+## 任务 6 — 创建一个新的受管对象
 
-Create `new.txt` in the assets bucket with exact content:
+在 assets bucket 中创建 `new.txt`，内容必须精确为：
 
 ```text
 Success
 ```
 
-`new.txt` must be managed in the primary state. Existing `base.txt`, seed objects, the manifest object, and `retained.txt` must preserve their remote identities and content.
+`new.txt` 必须由主 state 管理。已有的 `base.txt`、seed objects、manifest object 和 `retained.txt` 都必须保留其远程身份与内容。
 
-## Task 7 — Outputs and generated files
+## 任务 7 — 输出与生成文件
 
-Create these outputs:
+创建以下 output：
 
 ```text
 bucket_names
@@ -151,7 +151,7 @@ security_group_rule_ids
 managed_object_keys
 ```
 
-Generate the following files from Terraform-managed values, not hard-coded resource IDs:
+根据 Terraform 管理的值生成以下文件，不得硬编码资源 ID：
 
 ```text
 generated/s3.txt
@@ -159,23 +159,27 @@ generated/iam-users.txt
 generated/security.txt
 ```
 
-Expected content:
+预期内容：
 
-- `s3.txt`: both managed bucket names;
-- `iam-users.txt`: all three IAM user names;
-- `security.txt`: the security group ID and both rule IDs.
+- `s3.txt`：两个受管 bucket 的名称；
+- `iam-users.txt`：三个 IAM user 的名称；
+- `security.txt`：安全组 ID 和两条规则的 ID。
 
-Normalize ordering so repeated plans do not oscillate.
+请规范化输出顺序，避免重复 plan 时发生来回变化。
 
-## Completion conditions
+## 完成条件
 
-- Both backend keys are exact.
-- All required final addresses exist in their correct state.
-- All legacy, stale, and duplicate addresses are gone.
-- No pre-existing resource ID changed.
-- `retained.txt` remains remote and unmanaged.
-- `new.txt` exists and is managed.
-- Generated files are dynamic and stable.
-- `terraform plan` reports `0 to add, 0 to change, 0 to destroy` in both primary and auxiliary workspaces.
+- 两个 backend key 完全正确；
+- 所有要求的最终地址都存在于正确的 state 中；
+- 所有旧地址、过期地址和重复地址都已清理；
+- 没有任何已有资源的 ID 发生变化；
+- `retained.txt` 仍存在于远程环境，但不再由 Terraform 管理；
+- `new.txt` 已创建并由 Terraform 管理；
+- 生成文件使用动态值且内容稳定；
+- 主工作区和辅助工作区的 `terraform plan` 都显示：
 
-Use `VALIDATION.md` from the Solution package only after completing the lab or when performing a formal review.
+```text
+0 to add, 0 to change, 0 to destroy
+```
+
+完成实验后，或需要进行正式复核时，再使用 Solution 包中的 `VALIDATION.md`。
