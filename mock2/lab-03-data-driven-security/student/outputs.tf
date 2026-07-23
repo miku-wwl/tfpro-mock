@@ -8,20 +8,22 @@ output "ingress_rule_keys" {
 
 output "rules_by_destination" {
   value = {
-    for rule in local.normalized_rules : rule.destination => rule...
+    for rule in values(local.rules_by_key) : rule.destination => rule...
   }
 }
 
 output "rules_count_by_protocol" {
   value = {
-    for protocol in local.source_types : protocol => length([
-      for rule in local.normalized_rules : rule if rule.protocol == protocol
+    for protocol in distinct([
+      for rule in values(local.rules_by_key) : rule.protocol
+      ]) : protocol => length([
+      for rule in values(local.rules_by_key) : rule if rule.protocol == protocol
     ])
   }
 }
 
 output "source_types" {
-  value = local.source_types[0]
+  value = local.source_types
 }
 
 output "created_rule_ids" {
