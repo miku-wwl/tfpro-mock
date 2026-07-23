@@ -23,17 +23,6 @@ module "content" {
   tags        = local.common_tags
 }
 
-resource "aws_s3_object" "retained" {
-  bucket  = aws_s3_bucket.assets.id
-  key     = "retained.txt"
-  content = "KEEP-ME"
-  tags    = local.common_tags
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
 resource "aws_s3_object" "seeded" {
   for_each = local.seed_objects
 
