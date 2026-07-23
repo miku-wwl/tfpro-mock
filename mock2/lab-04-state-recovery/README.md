@@ -183,3 +183,10 @@ generated/security.txt
 ```
 
 完成实验后，或需要进行正式复核时，再使用 Solution 包中的 `VALIDATION.md`。
+
+## Task 6–7 知识点速记
+
+- 使用 `aws_s3_object` 管理新对象时，`key` 是远程对象名，`content` 是对象内容；两者必须分别对应题目要求的 `new.txt` 和 `Success`。
+- 新资源只有在 `terraform apply` 后才会真正创建并写入 state；apply 前应先确认 plan 没有 destroy 或 replacement。
+- 使用 `output` 暴露 Terraform 管理的值，使用 `local_file` 将这些值生成文件，避免硬编码资源 ID。
+- 生成文件中的集合或 map 应排序，保证重复 plan 时内容稳定，避免不必要的文件变更。
