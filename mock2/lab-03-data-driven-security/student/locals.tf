@@ -27,7 +27,14 @@ locals {
 
   rules_by_key = {
     for index, rule in local.normalized_rules :
-    "${rule.destination}-${rule.from_port}" => merge(rule, { input_position = index })
+    jsonencode({
+      source      = rule.source
+      destination = rule.destination
+      protocol    = rule.protocol
+      from_port   = rule.from_port
+      to_port     = rule.to_port
+    }) => merge(rule, { input_position = index })
+    if rule.direction == "ingress" && rule.enabled
   }
 
   source_types = toset([
