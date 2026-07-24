@@ -1,25 +1,25 @@
-# Lab 01 — Boundary-Aware Module Refactoring
+# Lab 01 — 按边界进行 Module 重构
 
-> Independent Terraform Professional-style practice lab. This is not an official HashiCorp exam question.
+> 这是一个独立的 Terraform Professional 风格练习实验，并非 HashiCorp 官方考试题。
 
-## Time box
+## 建议用时
 
-70–80 minutes
+70–80 分钟。
 
-## Scenario
+## 场景
 
-A platform team has inherited one working Terraform root module. The configuration currently manages networking, security boundaries, provider-access roles, compute workloads, and an artifact archive in one state file. The infrastructure already exists before the timed exercise begins.
+平台团队接手了一个可正常工作的 Terraform root module。当前配置把网络、安全边界、provider 访问角色、计算工作负载和制品归档全部放在同一个 state 中。计时开始前，基础设施已经存在。
 
-Your job is to refactor the configuration without replacing any managed infrastructure. The final design must also preserve strict AWS identity boundaries. A configuration that merely applies successfully but uses the wrong profile, alias, region, provider mapping, state location, or lock-file constraint does not meet the requirements.
+你的任务是在不替换任何受管基础设施的前提下重构配置，同时保留严格的 AWS 身份边界。即使配置能够成功 apply，只要 profile、alias、region、provider 映射、state 位置或 lock 文件约束错误，也不算完成。
 
-## Environment
+## 环境
 
-- Terraform CLI 1.11.x
-- Docker Desktop and Docker Compose
-- LocalStack
-- Bash or Windows PowerShell
+- Terraform CLI 1.11.x；
+- Docker Desktop 和 Docker Compose；
+- LocalStack；
+- Bash 或 Windows PowerShell。
 
-Run the setup script before starting the timer:
+开始计时前运行初始化脚本：
 
 ```bash
 ./scripts/setup.sh
@@ -29,46 +29,50 @@ Run the setup script before starting the timer:
 ./scripts/setup.ps1
 ```
 
-The setup creates pre-existing LocalStack resources, copies their state into the student root, and records a baseline. The credentials stored in this lab are LocalStack-only dummy values.
+初始化过程会创建已有的 LocalStack 资源，将 state 复制到 `student/`，并记录基线信息。本实验中的凭证仅为 LocalStack 使用的虚拟凭证。
 
-## Required identity contract
+## 身份配置要求
 
-The final roots must load these files through exact paths relative to each root module:
+最终的两个 root module 必须通过以下相对于 root 的精确路径加载文件：
 
-- Shared config: `${path.root}/../../.aws/config`
-- Shared credentials: `${path.root}/../../.aws/credentials`
+- 共享 config：`${path.root}/../../.aws/config`；
+- 共享 credentials：`${path.root}/../../.aws/credentials`。
 
-The files must contain the following contract:
+文件必须包含以下配置：
 
-| Profile | `source_profile` | Exact role ARN | Region | Intended use |
+| Profile | `source_profile` | 精确 role ARN | Region | 用途 |
 |---|---|---|---|---|
-| `fabric-admin` | `local-base` | `arn:aws:iam::000000000000:role/Lab01NetworkOperator` | `us-east-1` | VPC, subnets, security groups, state bucket |
-| `workload-admin` | `local-base` | `arn:aws:iam::000000000000:role/Lab01WorkloadOperator` | `us-east-1` | IAM and EC2 |
-| `archive-admin` | `local-base` | `arn:aws:iam::000000000000:role/Lab01ArchiveOperator` | `us-west-2` | Artifact bucket and object |
-| `observer` | `local-base` | `arn:aws:iam::000000000000:role/Lab01ReadOnlyObserver` | `us-east-1` | Read-only data sources |
+| `fabric-admin` | `local-base` | `arn:aws:iam::000000000000:role/Lab01NetworkOperator` | `us-east-1` | VPC、子网、安全组、state bucket |
+| `workload-admin` | `local-base` | `arn:aws:iam::000000000000:role/Lab01WorkloadOperator` | `us-east-1` | IAM 和 EC2 |
+| `archive-admin` | `local-base` | `arn:aws:iam::000000000000:role/Lab01ArchiveOperator` | `us-west-2` | 制品 bucket 和对象 |
+| `observer` | `local-base` | `arn:aws:iam::000000000000:role/Lab01ReadOnlyObserver` | `us-east-1` | 只读 data source |
 
-The credentials file must contain only the `local-base` source profile. Do not add a `default` profile. Do not replace the required profiles with static credentials in provider blocks.
+credentials 文件只能包含 `local-base` source profile，不得添加 `default` profile，也不得在 provider block 中用静态凭证替代这些 profile。
 
-## Provider contract
+## Provider 要求
 
-Use the following AWS provider aliases in the final configuration:
+最终配置必须使用以下 AWS provider alias：
 
 - `aws.network`
 - `aws.workload`
 - `aws.archive`
 - `aws.readonly`
 
-Every child module must declare the aliases it consumes, and every root module call must include an explicit `providers` map. At least two child modules must use `configuration_aliases`. The caller-identity data source must use `aws.readonly`, even though an unaliased high-privilege provider could also return a result.
+每个子模块都必须声明自己使用的 alias，每个 root module 调用都必须显式提供 `providers` 映射。至少两个子模块必须使用 `configuration_aliases`。caller-identity data source 必须使用 `aws.readonly`，即使使用未命名的高权限 provider 也能得到结果。
 
-The archive resources must remain in `us-west-2`; the other AWS resources remain in `us-east-1`.
+归档资源必须位于 `us-west-2`，其他 AWS 资源位于 `us-east-1`。
 
-## Initial layout
+## 初始结构
 
-The timed exercise starts in `student/` with a valid monolithic configuration. Most managed resources are in `combined.tf`. The `refactor-draft/` folder contains realistic but incorrect fragments supplied by the fictional platform team. Those fragments are not loaded by Terraform until you adapt them into the target layout.
+实验从 `student/` 中的有效单体配置开始，大多数受管资源位于 `combined.tf`。`refactor-draft/` 包含平台团队提供的、看似合理但实际错误的片段。除非你将它们适配到目标结构，否则这些片段不会被 Terraform 加载。
 
-Confirm the initial plan shows no managed-resource actions before changing configuration or state.
+修改配置或 state 前，先确认初始 plan 为：
 
-## Target layout
+```text
+0 to add, 0 to change, 0 to destroy
+```
+
+## 目标结构
 
 ```text
 student/
@@ -83,76 +87,72 @@ student/
     └── compute/
 ```
 
-Each child module must contain `main.tf`, `variables.tf`, and `outputs.tf`.
+每个子模块都必须包含 `main.tf`、`variables.tf` 和 `outputs.tf`。
 
-## Task 1 — Establish the baseline
+## 任务 1 — 建立基线
 
-1. Inspect the active configuration and state.
-2. Confirm the initial plan has `0 to add, 0 to change, 0 to destroy`.
-3. Record the current addresses for ordinary, `count`, and `for_each` resources.
-4. Preserve the IDs recorded under `baseline/`.
-5. Do not remove, replace, or recreate any existing managed resource.
+1. 检查当前生效的配置和 state；
+2. 确认初始 plan 为 `0 to add, 0 to change, 0 to destroy`；
+3. 记录普通资源、`count` 实例和 `for_each` 实例的当前地址；
+4. 保留 `baseline/` 中记录的 ID；
+5. 不得删除、替换或重新创建任何已有资源。
 
-## Task 2 — Refactor into child modules
+## 任务 2 — 重构为子模块
 
-Move responsibilities as follows:
-
-| Module | Responsibilities | Required AWS aliases |
+| Module | 职责 | 必需 AWS alias |
 |---|---|---|
-| `network` | VPC and subnets | `aws.network` |
-| `security` | Security groups, ingress rules, egress rules, read-only caller identity | `aws.network`, `aws.readonly` |
-| `identity` | Provider-access roles, workload role, instance profile | `aws.workload` |
-| `compute` | EC2 instances | `aws.workload` |
+| `network` | VPC 和子网 | `aws.network` |
+| `security` | 安全组、入站规则、出站规则、只读 caller identity | `aws.network`、`aws.readonly` |
+| `identity` | provider 访问角色、工作负载角色、instance profile | `aws.workload` |
+| `compute` | EC2 实例 | `aws.workload` |
 
-Rules:
+要求：
 
-- Child modules must not refer directly to resources inside sibling modules.
-- Cross-module values must pass through a root module using typed inputs and outputs.
-- Do not hardcode cloud resource IDs or a provider-derived AWS account ID.
-- Do not declare an unintended default AWS provider inside a child module.
-- Root module calls must explicitly map every required provider alias.
+- 子模块不得直接引用兄弟模块中的资源；
+- 跨模块数据必须通过 root module 的 typed input/output 传递；
+- 不得硬编码云资源 ID 或 provider 推导出的 AWS account ID；
+- 子模块不得意外声明默认 AWS provider；
+- root module 必须显式映射所有需要的 provider alias。
 
-## Task 3 — Repair dependencies and draft defects
+## 任务 3 — 修复依赖和草稿缺陷
 
-Repair the supplied refactoring fragments while constructing the target layout. The final data flow must include all of the following:
+构建目标结构时，同时修复提供的重构片段。最终数据流必须满足：
 
-- The security module receives the VPC ID from the network module.
-- The compute module receives subnet IDs, security-group IDs, and the instance-profile name.
-- The identity module receives the shared naming value and the observed AWS account ID.
-- A child module consumes a map output produced by another module.
-- The shared naming value continues to affect resources in both final states.
+- security module 从 network module 接收 VPC ID；
+- compute module 接收子网 ID、安全组 ID 和 instance profile 名称；
+- identity module 接收共享命名值和观测到的 AWS account ID；
+- 至少一个子模块使用另一个模块输出的 map；
+- 共享命名值继续影响两个最终 state 中的资源。
 
-The draft contains multiple independent defects, including collection misuse, an incorrect object attribute, a variable-contract mismatch, an undeclared argument, an omitted provider mapping, and a data source that can run under the wrong identity. Correct the defects rather than hiding them with broad `ignore_changes` rules.
+草稿中包含多种独立缺陷，包括集合使用错误、对象属性错误、变量契约不匹配、未声明参数、遗漏 provider 映射，以及可能在错误身份下运行的 data source。请修复这些问题，不要用宽泛的 `ignore_changes` 掩盖它们。
 
-## Task 4 — Migrate resource addresses
+## 任务 4 — 迁移资源地址
 
-Align every existing state object with its final module address without recreating infrastructure.
+将每个已有 state 对象对齐到最终 module 地址，不得重新创建基础设施。
 
-The completed state migration must cover:
+迁移必须覆盖：
 
-- ordinary resources
-- `count` instances
-- `for_each` instances with string keys
-- resources crossing into child-module addresses
-- resources later separated into different root states
+- 普通资源；
+- `count` 实例；
+- 使用字符串 key 的 `for_each` 实例；
+- 迁移到子模块地址的资源；
+- 后续需要拆分到不同 root state 的资源。
 
-The final states must contain no legacy root addresses from `student/combined.tf`.
+最终 state 中不得保留 `student/combined.tf` 产生的旧 root 地址。
 
-## Task 5 — Split roots and states
-
-Create two independent roots:
+## 任务 5 — 拆分 root 和 state
 
 ### `infra/shared`
 
-Manages:
+负责管理：
 
-- network module
-- security module
-- shared random naming resource
-- artifact bucket and object
-- remote-state bucket
+- network module；
+- security module；
+- 共享随机命名资源；
+- 制品 bucket 和对象；
+- remote-state bucket。
 
-Its backend key must be exactly:
+backend key 必须精确为：
 
 ```text
 tfpro-sim/lab-01/shared.tfstate
@@ -160,44 +160,44 @@ tfpro-sim/lab-01/shared.tfstate
 
 ### `infra/application`
 
-Manages:
+负责管理：
 
-- identity module
-- compute module
+- identity module；
+- compute module。
 
-Its backend key must be exactly:
+backend key 必须精确为：
 
 ```text
 tfpro-sim/lab-01/application.tfstate
 ```
 
-The application root must consume shared outputs through `terraform_remote_state`. Only the application root may read the shared state; child modules may not contain remote-state data sources.
+application root 必须通过 `terraform_remote_state` 使用 shared 输出；子模块不得包含 remote-state data source。
 
-No resource may remain managed by both states. Shared resources must not remain in the application state, and application resources must not remain in the shared state.
+两个 state 不得同时管理同一资源。shared 资源不能继续存在于 application state，application 资源也不能存在于 shared state。
 
-## Task 6 — Provider version and lock file
+## 任务 6 — Provider 版本和 lock 文件
 
-The inherited root uses a deliberately broad AWS provider constraint. In both final roots:
+两个最终 root 都必须满足：
 
-- require AWS provider `~> 5.90.0`
-- require Random provider `3.6.3` only where it is used
-- refresh `.terraform.lock.hcl`
-- preserve a lock entry for AWS `5.90.0`
-- do not commit provider binaries or `.terraform/`
+- AWS provider 约束为 `~> 5.90.0`；
+- 仅在使用 Random provider 的 root 中要求 `3.6.3`；
+- 刷新 `.terraform.lock.hcl`；
+- 保留 AWS `5.90.0` 的 lock 条目；
+- 不得提交 provider 二进制文件或 `.terraform/`。
 
-A stale lock constraint, missing platform checksum, or silently selected AWS 6.x provider is not acceptable.
+过期的 lock 约束、缺失的平台 checksum，或意外选择 AWS 6.x provider 都不符合要求。
 
-## Completion conditions
+## 完成条件
 
-The lab is complete only when all of the following are true:
+只有满足以下全部条件，实验才算完成：
 
-1. Both final roots initialize successfully with their exact backend keys.
-2. Both final roots validate successfully.
-3. Both final plans contain `0 to add, 0 to change, 0 to destroy`.
-4. No baseline resource ID changes.
-5. The final provider aliases, profiles, source profile, role ARNs, regions, file paths, module provider maps, and state provider addresses match this README.
-6. The caller-identity data source is evaluated through `aws.readonly`.
-7. No legacy address remains.
-8. No broad lifecycle rule masks a dependency or state error.
+1. 两个最终 root 都能使用精确 backend key 成功初始化；
+2. 两个最终 root 都能通过 validate；
+3. 两个最终 plan 都为 `0 to add, 0 to change, 0 to destroy`；
+4. 没有任何基线资源 ID 发生变化；
+5. provider alias、profile、source profile、role ARN、region、文件路径、module provider 映射和 state provider 地址都符合本 README；
+6. caller-identity data source 通过 `aws.readonly` 执行；
+7. 不存在旧地址；
+8. 没有用宽泛的 lifecycle 规则掩盖依赖或 state 错误。
 
-Use `CHECKS.md` for non-answer validation commands. The complete state-migration procedure is intentionally excluded from the Student package.
+完成后可使用 `CHECKS.md` 中的命令进行复核。完整的 state 迁移步骤不会放在 Student 包中。

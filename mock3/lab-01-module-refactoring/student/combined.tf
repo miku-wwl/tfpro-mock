@@ -174,7 +174,7 @@ resource "aws_instance" "workload" {
   provider = aws.workload
   for_each = var.workloads
 
-  ami                    = "ami-0f1a2b3c4d5e6f708"
+  ami                    = "ami-f5a14ea6"
   instance_type          = each.value.instance_type
   subnet_id              = aws_subnet.slice[each.value.subnet_index].id
   vpc_security_group_ids = [for tier in each.value.security_tiers : aws_security_group.tier[tier].id]
