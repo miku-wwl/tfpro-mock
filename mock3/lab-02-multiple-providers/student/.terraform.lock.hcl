@@ -1,7 +1,10 @@
-# This lock file is intentionally inconsistent with versions.tf.
-# Repair it with Terraform rather than manually inventing checksums.
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/hashicorp/aws" {
   version     = "5.82.2"
-  constraints = "~> 5.80"
+  constraints = "~> 5.82.0"
+  hashes = [
+    "h1:xeNk4aWj5/bjPodhIu26+AGKLnqlSEqev7dsOhIDUUQ=",
+  ]
 }
