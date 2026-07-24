@@ -8,25 +8,6 @@ address_space = {
 
 security_tiers = ["gateway", "services", "operations"]
 
-workloads = {
-  blue = {
-    subnet_index  = 0
-    instance_type = "t3.micro"
-    security_tiers = [
-      "gateway",
-      "services"
-    ]
-  }
-  amber = {
-    subnet_index  = 1
-    instance_type = "t3.micro"
-    security_tiers = [
-      "services",
-      "operations"
-    ]
-  }
-}
-
 archive = {
   region     = "us-west-2"
   object_key = "manifests/platform.json"
