@@ -13,7 +13,7 @@ resource "aws_autoscaling_group" "workload" {
   }
 
   lifecycle {
-    ignore_changes = all
+    ignore_changes = [desired_capacity]
   }
 
   tag {
