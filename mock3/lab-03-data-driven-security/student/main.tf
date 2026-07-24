@@ -41,6 +41,7 @@ module "inventory" {
 
   providers = {
     aws.readonly = aws.readonly
+    aws.audit    = aws.audit
   }
 }
 
