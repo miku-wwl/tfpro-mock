@@ -1,218 +1,142 @@
-# Lab 03 — Data-Driven Security Rules
+# Lab 03：数据驱动的安全组规则
 
-## Purpose
+> 这是 Terraform Professional 独立练习环境，不是官方认证考试题目。
 
-This is an independent Terraform Professional practice lab. It is designed to test data decoding, normalization, collection types, stable resource addressing, data sources, and explicit provider identity boundaries. It does **not** reproduce or claim to reproduce any official certification question.
+## 练习目标
 
-**Target time:** 45–55 minutes  
-**Target difficulty:** 92–96/100  
-**Terraform CLI:** 1.11.x  
-**Runtime:** Docker Desktop, Docker Compose, LocalStack, Bash or PowerShell
+本练习考察外部数据解码、数据规范化、集合类型处理、稳定资源地址、data source，以及 provider 身份边界和显式映射。
 
-## Scenario
+建议用时：45～55 分钟。  
+难度：92～96 / 100。  
+Terraform CLI：1.11.x。  
+运行环境：Docker Desktop、Docker Compose、LocalStack，以及 Bash 或 PowerShell。
 
-A platform team has already created a VPC, two subnets, and three security groups. You are not allowed to recreate those resources in the student configuration. You must discover them through data sources and then create ingress rules from an external file.
+## 场景
 
-The same logical rule set is supplied in CSV, JSON, and YAML. Your configuration must support all three formats without duplicating resource blocks or maintaining three separate implementations.
+平台团队已经创建了一个 VPC、两个子网和三个安全组。学生配置不得重新创建这些资源，必须通过 data source 动态发现它们，然后根据外部文件创建 ingress 规则。
 
-The environment intentionally separates three AWS identities:
+同一组逻辑规则同时提供 CSV、JSON 和 YAML 三种格式。配置必须支持三种格式，并将它们送入同一条后续处理流程，不能为每种格式分别维护一套资源实现。
 
-- `readonly`: discovers existing networking resources.
-- `rules`: creates security-group ingress rules.
-- `audit`: reads provider-derived caller identity information.
+环境故意划分了三个 AWS 身份：
 
-Passing `terraform apply` is not sufficient. Provider aliases and module mappings must match the required identity boundary.
+- `readonly`：发现已有网络资源；
+- `rules`：创建安全组入站规则；
+- `audit`：读取 provider 返回的 caller identity 信息。
 
-## Start the environment
+仅仅能够成功执行 `terraform apply` 并不代表完成任务。provider alias 和模块映射必须符合题目要求。
 
-From the lab root:
+## 启动环境
 
-### Bash
-
-```bash
-./scripts/setup.sh
-```
-
-### PowerShell
+环境已经准备好。进入学生目录：
 
 ```powershell
-./scripts/setup.ps1
+Set-Location student
 ```
 
-The setup script starts LocalStack, prepares the bootstrap configuration, shows a plan, and asks for explicit confirmation before applying the pre-created infrastructure.
+预创建资源包括：
 
-Then work only in `student/`.
-
-## Pre-created infrastructure
-
-The bootstrap configuration creates resources with randomized physical names and these logical tags:
-
-| Resource | Logical tag value |
+| 资源 | 逻辑标签 |
 |---|---|
 | VPC | `core` |
-| Public subnet | `public` |
-| Administration subnet | `administration` |
-| Frontend security group | `frontend` |
-| Datastore security group | `datastore` |
-| Operations security group | `operations` |
+| 公有子网 | `public` |
+| 管理子网 | `administration` |
+| 前端安全组 | `frontend` |
+| 数据库安全组 | `datastore` |
+| 运维安全组 | `operations` |
 
-Your student configuration must dynamically discover:
+学生配置必须动态发现 VPC ID、子网 ID、子网 CIDR、安全组 ID 和 caller account ID。不得硬编码 ID、CIDR 或 provider 返回的 account ID。
 
-- VPC ID
-- subnet IDs
-- subnet CIDR blocks
-- security-group IDs
-- caller account ID
+## 任务 1：读取外部数据
 
-Do not hardcode IDs, CIDRs, or a provider-derived account ID.
+定义变量 `rules_format`，允许的值为 `csv`、`json`、`yaml`，默认值必须是 `csv`。
 
----
+要求：
 
-## Task 1 — Read external data
+- CSV 使用 `csvdecode`；
+- JSON 使用 `jsondecode`；
+- YAML 使用 `yamldecode`；
+- 根据 `rules_format` 选择一组解码后的规则；
+- 三种格式必须进入同一条后续处理流程；
+- 不得为每种格式分别创建资源实现。
 
-Define a variable named `rules_format`.
+## 任务 2：规范化输入
 
-Allowed values:
+创建 `local.normalized_rules`，每条规则必须具有以下逻辑字段：
 
-- `csv`
-- `json`
-- `yaml`
-
-Default value: `csv`
-
-Requirements:
-
-- Use `csvdecode` for CSV.
-- Use `jsondecode` for JSON.
-- Use `yamldecode` for YAML.
-- Select one decoded rule set from `rules_format`.
-- Do not create separate resource implementations for each format.
-
-## Task 2 — Normalize the input
-
-Create `local.normalized_rules` with a consistent object shape containing exactly these logical fields:
-
-- `direction`
-- `source`
-- `destination`
-- `from_port`
-- `to_port`
-- `protocol`
-- `source_selector`
-- `description`
-- `enabled`
-
-Requirements:
-
-- Convert ports to `number` or `null`.
-- Convert `enabled` to `bool`.
-- Normalize protocol values consistently.
-- CSV, JSON, and YAML must produce equivalent Terraform values.
-- Do not hardcode logic by file row number.
-
-## Task 3 — Filter rules
-
-Only retain rules where:
-
-- `direction` is `ingress`
-- `enabled` is `true`
-
-The supplied egress rule and disabled ingress rule must not create resources.
-
-## Task 4 — Discover existing infrastructure with the required identity
-
-Use the `inventory` child module and data sources to discover all pre-created resources.
-
-Requirements:
-
-- Networking data sources must use the `readonly` provider alias.
-- Caller identity must use the `audit` provider alias.
-- The root module must pass providers explicitly with a `providers` map.
-- The child module must declare the aliases with `configuration_aliases`.
-- Do not replace either alias with the default provider merely because the configuration can run.
-
-## Task 5 — Create security-group rules
-
-There must be exactly one `aws_vpc_security_group_ingress_rule` resource block in the implementation.
-
-Requirements:
-
-- Use `for_each` and a `for` expression.
-- Do not use `count`.
-- Do not create one resource block per rule.
-- Do not use a list index as a permanent resource key.
-- Create rules through the `rule_engine` child module.
-- The root module must explicitly map the `rules` provider alias into the module.
-- The child module must declare its alias with `configuration_aliases`.
-
-The `for_each` key must be:
-
-- unique
-- stable
-- independent of input ordering
-- able to distinguish source, destination, protocol, from-port, and to-port
-
-Source behavior:
-
-- When `source` is `-`, use `source_selector` to resolve a subnet CIDR and set only `cidr_ipv4`.
-- When `source` names a security group, set only `referenced_security_group_id`.
-- `cidr_ipv4` and `referenced_security_group_id` must be mutually exclusive.
-- `protocol = -1` must use valid port arguments.
-- The rule description must use the caller account ID returned by the `audit` provider; do not hardcode it.
-
-The input contains two rules targeting `operations` on TCP port `8082`. They have different source security groups and both must exist.
-
-## Task 6 — Create outputs
-
-Create these outputs:
-
-- `normalized_rules`
-- `ingress_rule_keys`
-- `rules_by_destination`
-- `rules_count_by_protocol`
-- `source_types`
-- `created_rule_ids`
-
-`ingress_rule_keys` must make it clear that the two `operations:8082` rules have different stable keys.
-
-## Task 7 — Prove address stability
-
-Use the supplied shuffle script to randomize row order in CSV, JSON, and YAML.
-
-### Bash
-
-```bash
-./scripts/shuffle-input.sh
+```text
+direction, source, destination, from_port, to_port,
+protocol, source_selector, description, enabled
 ```
 
-### PowerShell
+要求：端口统一转换为 `number` 或 `null`，`enabled` 统一转换为 `bool`，协议值统一规范化；三种格式必须得到等价的 Terraform 值；不得根据输入文件行号硬编码逻辑。
 
-```powershell
-./scripts/shuffle-input.ps1
+## 任务 3：过滤规则
+
+只保留 `direction` 为 `ingress` 且 `enabled` 为 `true` 的规则。提供的 egress 规则和禁用的 ingress 规则都不得创建资源。
+
+## 任务 4：使用指定身份发现基础设施
+
+使用 `inventory` 子模块和 data source 发现所有预创建资源。
+
+- 网络 data source 必须使用 `readonly` provider alias；
+- caller identity 必须使用 `audit` provider alias；
+- root 调用子模块时必须显式传入 `providers` map；
+- 子模块必须通过 `configuration_aliases` 声明接收的 alias；
+- 不得用默认 provider 替代指定 alias。
+
+## 任务 5：创建安全组入站规则
+
+实现中只能有一个 `aws_vpc_security_group_ingress_rule` 资源块。
+
+要求：
+
+- 使用 `for_each` 和 `for` 表达式；
+- 不得使用 `count`；
+- 不得为每条输入规则单独创建资源块；
+- 不得使用列表索引作为长期资源 key；
+- 必须通过 `rule_engine` 子模块创建规则；
+- root 必须显式映射 `rules` provider alias；
+- 子模块必须通过 `configuration_aliases` 声明对应 alias。
+
+`for_each` key 必须唯一、稳定、与输入顺序无关，并能区分 source、destination、protocol、from-port 和 to-port。
+
+来源处理规则：
+
+- `source` 为 `-` 时，用 `source_selector` 查找子网 CIDR，并且只设置 `cidr_ipv4`；
+- `source` 是安全组名称时，只设置 `referenced_security_group_id`；
+- `cidr_ipv4` 与 `referenced_security_group_id` 必须互斥；
+- `protocol = -1` 时，必须使用 provider 支持的端口表示方式；
+- description 必须使用 `audit` provider 返回的 caller account ID，不得硬编码。
+
+输入中有两条目标为 `operations`、协议为 TCP、端口为 `8082` 的规则。它们来源安全组不同，必须同时存在。
+
+## 任务 6：创建输出
+
+创建以下 output：
+
+```text
+normalized_rules
+ingress_rule_keys
+rules_by_destination
+rules_count_by_protocol
+source_types
+created_rule_ids
 ```
 
-After shuffling:
+`ingress_rule_keys` 必须能证明 `operations:8082` 的两条规则使用了不同且稳定的资源 key。
 
-- resource addresses must remain unchanged
-- no existing rule may be deleted and recreated solely because the input order changed
-- a final plan must be stable
+## 任务 7：证明地址稳定性
 
-## Completion conditions
+使用提供的 shuffle 脚本随机打乱 CSV、JSON 和 YAML 的行顺序。打乱后资源地址必须保持不变，不得仅因输入顺序改变而删除并重新创建规则，最终 plan 也必须稳定。
 
-A complete solution should produce 10 active ingress rules for each input format and a final plan of `0 to add, 0 to change, 0 to destroy` after apply. Follow `VALIDATION.md` from the solution package for the full review process.
+## 完成条件
 
-## Reset
+每种输入格式都应生成 10 条有效 ingress 规则。apply 后再次 plan 应为：
 
-### Bash
-
-```bash
-./scripts/reset.sh
+```text
+0 to add, 0 to change, 0 to destroy
 ```
 
-### PowerShell
+## 重置环境
 
-```powershell
-./scripts/reset.ps1
-```
-
-Both scripts require explicit confirmation before running destroy operations.
+如需重新开始，应先确认再执行资源销毁操作。不要直接编辑 state JSON，也不要手工修改 state 内容。
