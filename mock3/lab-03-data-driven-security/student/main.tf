@@ -22,17 +22,18 @@ locals {
     if rule.direction == "ingress" && rule.enabled
   ]
 
-  duplicate_prone_keys = {
-    for rule in local.normalized_rules :
-    "${rule.destination}-${rule.from_port}" => rule
+  stable_rule_map = {
+    for rule in local.ingress_rules :
+    jsonencode([
+      rule.source,
+      rule.destination,
+      rule.protocol,
+      rule.from_port,
+      rule.to_port
+    ]) => rule
   }
 
-  indexed_rule_map = {
-    for index, rule in local.ingress_rules :
-    tostring(index) => rule
-  }
-
-  rule_key_set = toset(keys(local.indexed_rule_map))
+  rule_key_set = toset(keys(local.stable_rule_map))
 }
 
 module "inventory" {
@@ -52,7 +53,7 @@ module "rule_engine" {
     aws.rules = aws.rules
   }
 
-  rules              = local.indexed_rule_map
+  rules              = local.stable_rule_map
   security_group_ids = module.inventory.security_group_ids
   subnet_cidrs       = module.inventory.subnet_cidrs
   account_id         = module.inventory.caller_account_id
