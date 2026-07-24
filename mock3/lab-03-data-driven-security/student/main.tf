@@ -1,12 +1,10 @@
 locals {
-  decoded_rules = var.rules_format == "csv" ? csvdecode(file("${path.module}/data/rules.csv")) : (
-    var.rules_format == "json" ? jsondecode(file("${path.module}/data/rules.json")) : {
-      rows = yamldecode(file("${path.module}/data/rules.yaml"))
-    }
+  raw_rules = var.rules_format == "csv" ? csvdecode(file("${path.module}/data/rules.csv")) : (
+    var.rules_format == "json" ? jsondecode(file("${path.module}/data/rules.json")) : yamldecode(file("${path.module}/data/rules.yaml"))
   )
 
   normalized_rules = [
-    for index, rule in local.decoded_rules : {
+    for index, rule in local.raw_rules : {
       direction       = lower(rule.direction)
       source          = rule.source
       destination     = rule.destnation
