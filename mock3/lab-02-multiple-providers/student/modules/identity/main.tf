@@ -1,4 +1,6 @@
 resource "aws_iam_policy" "observer" {
+  provider = aws.identity
+
   name        = "tfpro-lab02-observer"
   description = "Seeded identity resource for provider-mapping practice"
 

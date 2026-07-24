@@ -1,4 +1,6 @@
 resource "aws_autoscaling_group" "workload" {
+  provider = aws.compute
+
   name                = "tfpro-lab02-workload"
   desired_capacity    = var.desired_capacity
   min_size            = 1
