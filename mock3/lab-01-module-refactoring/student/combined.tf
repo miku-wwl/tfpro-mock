@@ -39,8 +39,8 @@ data "aws_iam_policy_document" "ec2_assume" {
 locals {
   name_prefix = "${random_pet.scope.id}-${var.environment}"
   archive_manifest = jsonencode({
-    exercise   = "lab-01"
-    environment = var.environment
+    exercise      = "lab-01"
+    environment   = var.environment
     owner_account = data.aws_caller_identity.observer.account_id
   })
 }
@@ -99,10 +99,10 @@ resource "aws_vpc_security_group_ingress_rule" "gateway_to_services" {
 
   security_group_id            = aws_security_group.tier["services"].id
   referenced_security_group_id = aws_security_group.tier["gateway"].id
-  from_port                     = 8443
-  to_port                       = 8443
-  ip_protocol                   = "tcp"
-  description                   = "Gateway to services"
+  from_port                    = 8443
+  to_port                      = 8443
+  ip_protocol                  = "tcp"
+  description                  = "Gateway to services"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "operations_to_services" {
@@ -110,10 +110,10 @@ resource "aws_vpc_security_group_ingress_rule" "operations_to_services" {
 
   security_group_id            = aws_security_group.tier["services"].id
   referenced_security_group_id = aws_security_group.tier["operations"].id
-  from_port                     = 9090
-  to_port                       = 9090
-  ip_protocol                   = "tcp"
-  description                   = "Operations metrics access"
+  from_port                    = 9090
+  to_port                      = 9090
+  ip_protocol                  = "tcp"
+  description                  = "Operations metrics access"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "operations_to_gateway" {
@@ -121,10 +121,10 @@ resource "aws_vpc_security_group_ingress_rule" "operations_to_gateway" {
 
   security_group_id            = aws_security_group.tier["gateway"].id
   referenced_security_group_id = aws_security_group.tier["operations"].id
-  from_port                     = 2200
-  to_port                       = 2200
-  ip_protocol                   = "tcp"
-  description                   = "Operations administrative access"
+  from_port                    = 2200
+  to_port                      = 2200
+  ip_protocol                  = "tcp"
+  description                  = "Operations administrative access"
 }
 
 resource "aws_vpc_security_group_egress_rule" "outbound" {
