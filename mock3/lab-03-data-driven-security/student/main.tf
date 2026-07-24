@@ -17,13 +17,18 @@ locals {
     }
   ]
 
+  ingress_rules = [
+    for rule in local.normalized_rules : rule
+    if rule.direction == "ingress" && rule.enabled
+  ]
+
   duplicate_prone_keys = {
     for rule in local.normalized_rules :
     "${rule.destination}-${rule.from_port}" => rule
   }
 
   indexed_rule_map = {
-    for index, rule in local.normalized_rules :
+    for index, rule in local.ingress_rules :
     tostring(index) => rule
   }
 
