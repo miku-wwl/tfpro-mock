@@ -1,4 +1,0 @@
-output "subnet_ids_by_zone" {
-  value = aws_subnet.slice[*].id
-  # Defect: the declared/output behavior is a list, while downstream expects a map keyed by zone.
-}
