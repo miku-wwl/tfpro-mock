@@ -18,7 +18,6 @@ locals {
       source_selector = coalesce(rule.source_selector, "") == "" ? null : rule.source_selector
       description     = rule.description
       enabled         = tobool(rule.enabled)
-      row_key         = tostring(index)
     }
   ]
 
@@ -27,15 +26,19 @@ locals {
     if rule.direction == "ingress" && rule.enabled
   ]
 
-  # This key is incomplete and input-position data is treated as persistent identity.
   rules_by_key = {
-    for index, rule in local.ingress_rules :
-    "${rule.destination}:${rule.from_port}" => merge(rule, { permanent_key = tostring(index) })
+    for rule in local.ingress_rules : jsonencode({
+      source          = rule.source
+      destination     = rule.destination
+      protocol        = rule.protocol
+      from_port       = rule.from_port
+      to_port         = rule.to_port
+      source_selector = rule.source_selector
+    }) => rule
   }
 
   subnet_cidrs = {
-    public         = data.aws_subnet.selected["public"].cidr_block
-    administration = "10.42.90.0/24"
+    for role, subnet in data.aws_subnet.selected : role => subnet.cidr_block
   }
 
   protocol_set = toset([for rule in local.normalized_rules : rule.protocol])
