@@ -32,6 +32,24 @@
 
 backend 配置与 AWS provider alias 是两个不同概念，不要混淆。
 
+> NOTE ☆：backend bucket 不能由自身创建。应先用独立的 bootstrap 项目创建 S3 bucket，再执行 backend 迁移。
+>
+> bootstrap 中先配置 LocalStack provider，并创建：
+>
+> ```hcl
+> resource "aws_s3_bucket" "terraform_state" {
+>   bucket = "tfpro-lab04-state"
+>
+>   tags = {
+>     Name      = "tfpro-lab04-state"
+>     ManagedBy = "bootstrap"
+>   }
+> }
+> ```
+>
+> 然后在 bootstrap 目录执行 
+> `terraform init` 和 `terraform apply`，再回到 student 目录执行 backend 迁移。
+
 ## 任务 2：接管已有资源
 
 通过修复配置、迁移 state 地址和必要的 import，使主 state 最终包含以下精确地址：
@@ -125,4 +143,3 @@ generated/security.txt
 ```
 
 只有满足上述条件后，才可以执行 apply。
-
