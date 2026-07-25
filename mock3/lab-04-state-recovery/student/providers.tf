@@ -2,7 +2,7 @@
 # the provider alias required by the exercise.
 provider "aws" {
   alias                       = "storage"
-  region                      = "us-west-2" # intentionally wrong for this lab
+  region                      = var.aws_region
   access_key                  = "test"
   secret_key                  = "test"
   s3_use_path_style           = true

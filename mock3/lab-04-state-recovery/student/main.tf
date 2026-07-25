@@ -4,10 +4,8 @@ locals {
     ManagedBy = "Terraform"
   }
 
-  # The capitalized key is intentionally wrong. The final state address must
-  # use members["alpha"].
   member_map = {
-    Alpha = var.iam_user_names["alpha"]
+    alpha = var.iam_user_names["alpha"]
     beta  = var.iam_user_names["beta"]
     gamma = var.iam_user_names["gamma"]
   }
@@ -29,8 +27,7 @@ locals {
 resource "aws_s3_bucket" "assets" {
   provider = aws.storage
 
-  # This near-match would force replacement after the legacy address is moved.
-  bucket = replace(var.asset_bucket_name, "-assets", "-asset")
+  bucket = var.asset_bucket_name
 
   tags = merge(local.common_tags, {
     Name = "${var.name_prefix}-assets"
@@ -42,8 +39,7 @@ resource "aws_s3_bucket" "logs" {
   bucket   = var.logs_bucket_name
 
   tags = merge(local.common_tags, {
-    Name        = "${var.name_prefix}-logs"
-    Environment = "training" # extra drift after import
+    Name = "${var.name_prefix}-logs"
   })
 }
 
@@ -77,7 +73,7 @@ resource "aws_security_group" "application" {
   provider = aws.network
 
   name        = var.security_group_name
-  description = "Temporary application group" # drift after import
+  description = "Application security group"
   vpc_id      = var.vpc_id
 
   egress {
