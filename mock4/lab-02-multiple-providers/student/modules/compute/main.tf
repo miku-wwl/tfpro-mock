@@ -1,5 +1,5 @@
 resource "aws_launch_template" "workload" {
-  provider = aws.identity
+  provider = aws.compute
 
   name          = "lab02-nimbus-template"
   image_id      = "ami-00000000000000001"
@@ -7,7 +7,7 @@ resource "aws_launch_template" "workload" {
 }
 
 resource "aws_autoscaling_group" "pool" {
-  provider = aws.identity
+  provider = aws.compute
 
   name               = "lab02-nimbus-pool"
   availability_zones = ["us-east-1a"]

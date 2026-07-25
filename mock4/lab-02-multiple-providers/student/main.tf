@@ -1,4 +1,5 @@
 resource "aws_iam_role" "operator" {
+  provider = aws.identity
   for_each = local.profile_matrix
 
   name = each.value.role_name
@@ -26,18 +27,32 @@ resource "terraform_data" "profile_contract" {
 module "compute" {
   source = "./modules/compute"
 
+  providers = {
+    aws.compute = aws.compute
+  }
+
   desired_capacity = 2
 }
 
 module "identity" {
   source = "./modules/identity"
+
+  providers = {
+    aws.identity = aws.identity
+  }
 }
 
 module "storage" {
   source = "./modules/storage"
+
+  providers = {
+    aws.compute = aws.compute
+  }
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {
+  provider = aws.readonly
+}
 
 output "current_account_id" {
   value = data.aws_caller_identity.current.account_id
