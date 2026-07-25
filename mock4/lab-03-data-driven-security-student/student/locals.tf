@@ -22,9 +22,14 @@ locals {
     }
   ]
 
+  ingress_rules = [
+    for rule in local.normalized_rules : rule
+    if rule.direction == "ingress" && rule.enabled
+  ]
+
   # This key is incomplete and input-position data is treated as persistent identity.
   rules_by_key = {
-    for index, rule in local.normalized_rules :
+    for index, rule in local.ingress_rules :
     "${rule.destination}:${rule.from_port}" => merge(rule, { permanent_key = tostring(index) })
   }
 
