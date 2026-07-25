@@ -10,15 +10,14 @@ locals {
   normalized_rules = [
     for index, rule in local.selected_rules : {
       direction       = lower(rule.direction)
-      source          = rule.source
-      destination     = rule.destination
-      from_port       = rule.from_port
-      to_port         = rule.to_port
-      protocol        = rule.protocol
-      source_selector = try(rule.source_seletor, "")
+      source          = lower(rule.source)
+      destination     = lower(rule.destination)
+      from_port       = try(tonumber(rule.from_port), null)
+      to_port         = try(tonumber(rule.to_port), null)
+      protocol        = lower(rule.protocol)
+      source_selector = coalesce(rule.source_selector, "") == "" ? null : rule.source_selector
       description     = rule.description
-      enabled         = rule.enabled
-      source_probe    = rule.source == "-" ? [rule.source_selector] : rule.source
+      enabled         = tobool(rule.enabled)
       row_key         = tostring(index)
     }
   ]
