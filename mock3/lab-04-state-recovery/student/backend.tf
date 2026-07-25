@@ -1,11 +1,11 @@
 terraform {
   backend "s3" {
-    bucket = "RENDERED-BY-SETUP"
-    key    = "tfpro-sim/lab-04/terraform.tfstates"
-    region = "us-west-2"
+    bucket = "tfpro-lab04-state"
+    key    = "tfpro-sim/lab-04/terraform.tfstate"
+    region = "us-east-1"
 
     endpoints = {
-      s3 = "http://localhost:4567"
+      s3 = "http://localhost:4566"
     }
 
     access_key                  = "test"
