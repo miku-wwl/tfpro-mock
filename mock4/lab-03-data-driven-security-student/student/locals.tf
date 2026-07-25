@@ -1,6 +1,11 @@
 locals {
-  # Intentionally defective starter: repair the data selection and type handling.
-  selected_rules = var.rules_format == "csv" ? csvdecode(file("${path.module}/data/rules.csv")) : var.rules_format == "json" ? jsondecode(file("${path.module}/data/rules.json")) : yamldecode(file("${path.module}/data/rules.yaml"))
+  selected_rules = (
+    var.rules_format == "csv"
+    ? csvdecode(file("${path.module}/data/rules.csv"))
+    : var.rules_format == "json"
+    ? jsondecode(file("${path.module}/data/rules.json"))
+    : yamldecode(file("${path.module}/data/rules.yaml"))
+  )
 
   normalized_rules = [
     for index, rule in local.selected_rules : {
