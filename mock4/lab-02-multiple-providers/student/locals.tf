@@ -13,7 +13,7 @@ locals {
       region         = trimspace(row.region)
       output         = trimspace(row.output) == "" ? null : trimspace(row.output)
       enabled        = tobool(row.enabled)
-      session_ttl    = tonumber(row.session_ttl)
+      session_ttl    = try(tonumber(trimspace(row.session_ttl)), null)
       module_targets = trimspace(row.module_targets) == "" ? toset([]) : toset(split("|", trimspace(row.module_targets)))
       note           = trimspace(row.note) == "" ? null : trimspace(row.note)
       priority       = 10
