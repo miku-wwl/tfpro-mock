@@ -155,7 +155,7 @@ resource "aws_instance" "executor" {
 
   ami                    = var.ami_id
   instance_type          = each.value.instance_type
-  subnet_id              = aws_subnet.segment[index(var.subnet_specs[*].key, each.value.subnet_key)].id
+  subnet_id              = aws_subnet.segment[local.subnet_index_by_key[each.value.subnet_key]].id
   vpc_security_group_ids = [aws_security_group.boundary["services"].id]
   iam_instance_profile   = aws_iam_instance_profile.runtime.name
 

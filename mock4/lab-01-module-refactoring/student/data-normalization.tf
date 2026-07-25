@@ -59,6 +59,10 @@ locals {
     local.yaml_node_map,
   )
 
+  subnet_index_by_key = {
+    for index_value, subnet in var.subnet_specs : subnet.key => index_value
+  }
+
   enabled_node_map = {
     for key, node in local.normalized_node_map : key => node
     if node.enabled

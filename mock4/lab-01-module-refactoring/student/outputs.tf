@@ -2,8 +2,8 @@ output "baseline_resource_ids" {
   value = {
     vpc_id = aws_vpc.fabric.id
     subnet_ids = {
-      for index_value, subnet in aws_subnet.segment :
-      var.subnet_specs[index_value].key => subnet.id
+      for key, index_value in local.subnet_index_by_key :
+      key => aws_subnet.segment[index_value].id
     }
     security_group_ids = {
       for key, group in aws_security_group.boundary : key => group.id
