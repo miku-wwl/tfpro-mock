@@ -75,6 +75,8 @@ outputs.tf
 - root module 负责把解码后的 list 转换为稳定的 map；
 - 至少一个子模块 object 属性必须是 optional。
 
+> NOTE ☆：Terraform 的 `merge()` 会按参数顺序合并 map。遇到相同 key 时，后面的 map 会覆盖前面的 map；它只进行浅层合并，不会递归合并嵌套 map。
+
 ## 任务 3：修复数据和模块依赖
 
 修复重构脚手架中的语义问题，使其满足：
@@ -135,4 +137,3 @@ application root 必须通过 terraform_remote_state 获取 shared 输出。只�
 - 不残留旧的单体资源地址；
 - 调整三种输入文件顺序后，不产生 create、delete 或 replacement；
 - outputs 正确暴露规范化对象 map、按资源 key 索引的 inventory，以及保持为 null 的 description。
-
