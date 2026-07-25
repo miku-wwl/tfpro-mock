@@ -51,15 +51,13 @@ resource "aws_s3_object" "base" {
   content_type = "text/plain"
 }
 
-resource "aws_s3_object" "retained" {
+resource "aws_s3_object" "new" {
   provider     = aws.storage
   bucket       = var.asset_bucket_name
-  key          = "retained.txt"
-  content      = "KEEP-ME"
+  key          = "new.txt"
+  content      = "Success"
   content_type = "text/plain"
 }
-
-# Add the required managed new.txt object during recovery.
 
 resource "aws_iam_user" "members" {
   provider = aws.identity

@@ -15,5 +15,5 @@ output "security_group_rule_ids" {
 }
 
 output "managed_object_keys" {
-  value = toset([aws_s3_object.base.key, aws_s3_object.retained.key])
+  value = toset([aws_s3_object.base.key, aws_s3_object.new.key])
 }
