@@ -1,67 +1,46 @@
-# Lab 03 — Data-Driven Security Rules
+# Lab 03 —— 数据驱动的安全组规则
 
-## Scenario
+## 场景
 
-A platform team already operates a small network in LocalStack. The VPC, two subnets, and three security groups were created before your shift began. Your task is to repair a Terraform configuration that reads the same rule catalogue from CSV, JSON, or YAML and creates only the required ingress rules.
+平台团队已经在 LocalStack 中运行一套小型网络。VPC、两个子网和三个安全组都已在你接手前创建完成。你的任务是修复 Terraform 配置，从 CSV、JSON 或 YAML 读取同一份规则目录，并只创建要求的入站规则。
 
-This is an original practice exercise. It is not an official exam question and does not reproduce any official assessment.
+这是原创练习题，不是 HashiCorp 官方考试题，也不复刻官方考试内容。
 
-**Target time:** 45–55 minutes  
-**Target difficulty:** Terraform Professional, 92–96/100
+目标用时：45～55 分钟；难度：Terraform Professional 高级练习。
 
-## Environment
+## 环境要求
 
 - Terraform CLI 1.11.x
-- Docker Desktop with Docker Compose
+- Docker Desktop 和 Docker Compose
 - LocalStack
-- Bash or PowerShell
+- Bash 或 PowerShell
 
-The setup creates randomized resource names. Do not hardcode generated AWS identifiers or CIDR values in the lab configuration.
+环境初始化会使用随机名称。不要在配置中硬编码生成的 AWS ID 或 CIDR。
 
-## Start
+## 初始环境
 
-Bash:
+通过数据源发现现有基础设施。初始化环境会创建：
 
-```bash
-./scripts/setup.sh
-cd student
-terraform init
-```
+- 一个带有 `Lab = lab-03-data-driven-security`、`Role = network` 标签的 VPC；
+- 两个角色分别为 `public` 和 `administration` 的子网；
+- 三个角色分别为 `edge`、`ledger` 和 `control` 的安全组。
 
-PowerShell:
+不要在练习配置中重新创建或替换这些资源。
 
-```powershell
-./scripts/setup.ps1
-Set-Location student
-terraform init
-```
+## 任务 1：读取外部数据
 
-The starter is intentionally defective. A failing validation or plan is part of the exercise.
+定义变量 `rules_format`，允许值为 `csv`、`json`、`yaml`，默认值必须为 `csv`。
 
-## Existing infrastructure
+- CSV 使用 `csvdecode`；
+- JSON 使用 `jsondecode`；
+- YAML 使用 `yamldecode`；
+- 三种格式必须进入同一条后续规则处理流程，不能为每种格式分别维护资源块。
 
-Discover all infrastructure through data sources. The bootstrap stack creates:
+三份目录描述的是同一组逻辑规则，但原始标量类型有意不同。
 
-- one VPC tagged with `Lab = lab-03-data-driven-security` and `Role = network`
-- two subnets tagged with roles `public` and `administration`
-- three security groups tagged with roles `edge`, `ledger`, and `control`
+## 任务 2：规范化规则目录
 
-Do not create replacements for these resources in the lab configuration.
-
-## Task 1 — Read external data
-
-Define `variable "rules_format"` with allowed values `csv`, `json`, and `yaml`; its default must be `csv`.
-
-- Use `csvdecode` for CSV.
-- Use `jsondecode` for JSON.
-- Use `yamldecode` for YAML.
-- Select one input format without duplicating resource blocks or maintaining three independent implementations.
-
-The three catalogues describe the same logical rules, but their raw scalar types intentionally differ.
-
-## Task 2 — Normalize the catalogue
-
-Create `local.normalized_rules` and normalize every item to the same object shape:
+创建 `local.normalized_rules`，并把每条记录统一为以下对象结构：
 
 - `direction`
 - `source`
@@ -73,96 +52,94 @@ Create `local.normalized_rules` and normalize every item to the same object shap
 - `description`
 - `enabled`
 
-Requirements:
+要求：
 
-- ports are numbers or `null`
-- `enabled` is a boolean
-- protocol and selector values are normalized consistently
-- JSON/YAML `null` and CSV empty strings have identical meaning
-- a missing selector must remain `null`; do not silently turn it into a meaningful empty-string value
-- do not special-case input row numbers
+- 端口必须是 number 或 `null`；
+- `enabled` 必须是 boolean；
+- protocol 和 selector 的值要统一规范；
+- JSON/YAML 的 `null` 与 CSV 的空字符串含义相同；
+- 缺失 selector 必须保持为 `null`，不能悄悄变成有意义的空字符串；
+- 不能使用输入行号作为特殊处理依据。
 
-## Task 3 — Filter rules
+## 任务 3：筛选规则
 
-Only retain records where:
+只保留同时满足以下条件的记录：
 
-- `direction == "ingress"`
-- `enabled == true`
+- `direction == "ingress"`；
+- `enabled == true`。
 
-The egress record and disabled ingress record must not create resources.
+egress 记录和 disabled ingress 记录都不能创建资源。
 
-## Task 4 — Resolve sources and create rules
+## 任务 4：解析来源并创建规则
 
-Use exactly one `aws_vpc_security_group_ingress_rule` resource block.
+只能使用一个 `aws_vpc_security_group_ingress_rule` 资源块，并且必须使用：
 
-You must use:
+- `for_each`；
+- 一个或多个 `for` 表达式；
+- 数据源获取 VPC、子网 CIDR 和安全组 ID。
 
-- `for_each`
-- one or more `for` expressions
-- data sources for VPC, subnet CIDRs, and security group IDs
+禁止使用：
 
-You must not use:
+- `count`；
+- 重复的资源块；
+- 为每条输入记录手写一个资源；
+- 将列表位置作为长期资源 key。
 
-- `count`
-- repeated resource blocks
-- manually authored resources per input row
-- list positions as permanent resource keys
+来源语义：
 
-Source semantics:
+- `source == "-"` 表示通过 `source_selector` 选择 CIDR 来源；
+- 其他 `source` 值表示安全组角色；
+- CIDR 规则只能设置 `cidr_ipv4`；
+- 安全组来源只能设置 `referenced_security_group_id`；
+- 两个字段必须互斥；
+- `protocol == "-1"` 时必须使用 provider 兼容的端口表示方式。
 
-- `source == "-"` means a CIDR source selected by `source_selector`
-- any other source is a security-group role
-- CIDR rules set only `cidr_ipv4`
-- security-group rules set only `referenced_security_group_id`
-- the two arguments must be mutually exclusive
-- `protocol == "-1"` must use valid port handling
+`for_each` key 必须唯一、稳定、与输入顺序无关，并区分所有决定资源身份的字段。特别是，指向 `control` 的两条 TCP/8082 规则必须拥有不同地址。
 
-The `for_each` key must be unique, stable, independent of input order, and distinguish every field that determines resource identity. In particular, the two `control` rules on TCP/8082 must have different addresses.
+## 任务 5：输出结果
 
-## Task 5 — Outputs
+创建以下 output：
 
-Create these outputs:
+- `normalized_rules`：规范化对象 map；
+- `ingress_rule_keys`；
+- `rules_by_destination`；
+- `rules_count_by_protocol`；
+- `source_types`；
+- `created_rule_ids`；
+- `unique_protocols`。
 
-- `normalized_rules` — a map of normalized objects
-- `ingress_rule_keys`
-- `rules_by_destination`
-- `rules_count_by_protocol`
-- `source_types`
-- `created_rule_ids`
-- `unique_protocols`
+这些输出应能证明：
 
-The outputs must make it easy to prove that:
+- 指向 `control` 的两条 TCP/8082 规则都存在；
+- CIDR 来源与安全组来源被分别解析；
+- 三种输入格式产生相同的逻辑结果。
 
-- both TCP/8082 rules targeting `control` exist
-- CIDR and security-group sources are resolved differently
-- all three input formats produce the same logical result
+## Shuffle 测试
 
-## Shuffle test
-
-After a successful apply, run the shuffle script from the package root:
-
-```bash
-./scripts/shuffle-input.sh
-```
-
-or:
+成功 apply 后，运行：
 
 ```powershell
 ./scripts/shuffle-input.ps1
 ```
 
-The script reorders CSV rows, the JSON array, and the YAML list. A correct solution keeps the same Terraform resource addresses and produces no delete/create actions solely because input ordering changed.
+或：
 
-## Completion criteria
+```bash
+./scripts/shuffle-input.sh
+```
 
-- formatting passes
-- initialization succeeds
-- validation succeeds after repairs
-- CSV, JSON, and YAML produce equivalent plans
-- there are 15 enabled ingress resources
-- exactly two enabled TCP/8082 rules target `control`, with different source security groups
-- egress and disabled records create nothing
-- the all-protocol rule uses null ports
-- shuffle testing causes no infrastructure changes
+脚本会打乱 CSV 行、JSON 数组和 YAML 列表。正确的实现应保持 Terraform resource address 不变，不能仅因输入顺序变化而产生 delete/create。
 
-Use `VALIDATION.md` from the Solution package only after completing your closed-book attempt.
+## 完成标准
+
+- 格式化通过；
+- 初始化成功；
+- 修复后 validation 成功；
+- CSV、JSON、YAML 产生等价 plan；
+- 创建 15 条 enabled ingress 规则；
+- 恰好两条 TCP/8082 规则指向 `control`，且来源安全组不同；
+- egress 和 disabled 记录不创建任何规则；
+- all-protocol 规则使用 `null` 端口；
+- shuffle 测试不产生基础设施变更。
+
+完成闭卷尝试后，再使用 Solution package 中的 `VALIDATION.md` 进行核验。
