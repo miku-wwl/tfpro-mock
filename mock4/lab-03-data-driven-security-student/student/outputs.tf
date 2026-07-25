@@ -1,5 +1,5 @@
 output "normalized_rules" {
-  value = local.normalized_rules
+  value = local.normalized_rule_map
 }
 
 output "ingress_rule_keys" {
@@ -8,20 +8,24 @@ output "ingress_rule_keys" {
 
 output "rules_by_destination" {
   value = {
-    for rule in local.normalized_rules : rule.destination => rule
+    for destination in distinct([for rule in local.ingress_rules : rule.destination]) : destination => [
+      for rule in local.ingress_rules : rule if rule.destination == destination
+    ]
   }
 }
 
 output "rules_count_by_protocol" {
   value = {
     for protocol in local.protocol_set : protocol => length([
-      for rule in local.normalized_rules : rule if rule.protocol == protocol
+      for rule in local.ingress_rules : rule if rule.protocol == protocol
     ])
   }
 }
 
 output "source_types" {
-  value = local.protocol_set[0]
+  value = {
+    for key, rule in local.rules_by_key : key => rule.source == "-" ? "cidr" : "security_group"
+  }
 }
 
 output "created_rule_ids" {

@@ -26,6 +26,18 @@ locals {
     if rule.direction == "ingress" && rule.enabled
   ]
 
+  normalized_rule_map = {
+    for rule in local.normalized_rules : jsonencode({
+      direction       = rule.direction
+      source          = rule.source
+      destination     = rule.destination
+      protocol        = rule.protocol
+      from_port       = rule.from_port
+      to_port         = rule.to_port
+      source_selector = rule.source_selector
+    }) => rule
+  }
+
   rules_by_key = {
     for rule in local.ingress_rules : jsonencode({
       source          = rule.source
