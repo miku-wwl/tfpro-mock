@@ -12,5 +12,13 @@ resource "aws_subnet" "segment" {
   vpc_id            = aws_vpc.fabric.id
   cidr_block        = each.value.cidr
   availability_zone = each.value.az
-  tags               = { Name = "${var.name_prefix}-${each.key}" }
+  tags = merge(
+    {
+      Name       = "${var.name_prefix}-${each.key}"
+      SegmentKey = each.key
+    },
+    each.value.route_label == null ? {} : {
+      RouteLabel = each.value.route_label
+    }
+  )
 }
