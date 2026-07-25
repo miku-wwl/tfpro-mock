@@ -1,0 +1,233 @@
+{
+  "baseline_resource_ids": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "artifact_bucket_name": "string",
+        "artifact_object_key": "string",
+        "iam_role_name": "string",
+        "instance_ids": [
+          "object",
+          {
+            "north-api": "string",
+            "south-worker": "string"
+          }
+        ],
+        "instance_profile_name": "string",
+        "security_group_ids": [
+          "object",
+          {
+            "gateway": "string",
+            "ops": "string",
+            "services": "string"
+          }
+        ],
+        "state_bucket_name": "string",
+        "subnet_ids": [
+          "object",
+          {
+            "blue": "string",
+            "green": "string"
+          }
+        ],
+        "vpc_id": "string"
+      }
+    ],
+    "value": {
+      "artifact_bucket_name": "logical-magpie-artifact-vault",
+      "artifact_object_key": "manifests/runtime.txt",
+      "iam_role_name": "logical-magpie-runtime-role",
+      "instance_ids": {
+        "north-api": "i-ccec853bd315ac4a7",
+        "south-worker": "i-f0a806fa010e24144"
+      },
+      "instance_profile_name": "logical-magpie-runtime-profile",
+      "security_group_ids": {
+        "gateway": "sg-0891d160c41390b4a",
+        "ops": "sg-61e7d1c1afe336b6f",
+        "services": "sg-ae6ad73362345eaa5"
+      },
+      "state_bucket_name": "tfpro-lab01-state-nimbus",
+      "subnet_ids": {
+        "blue": "subnet-f598bf4b32d94404b",
+        "green": "subnet-26eed3cfdb54d20c9"
+      },
+      "vpc_id": "vpc-d8b4442c97501f2eb"
+    }
+  },
+  "instance_inventory": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "north-api": [
+          "object",
+          {
+            "description": "dynamic",
+            "id": "string",
+            "priority": "number",
+            "subnet_key": "string"
+          }
+        ],
+        "south-worker": [
+          "object",
+          {
+            "description": "dynamic",
+            "id": "string",
+            "priority": "number",
+            "subnet_key": "string"
+          }
+        ]
+      }
+    ],
+    "value": {
+      "north-api": {
+        "description": null,
+        "id": "i-ccec853bd315ac4a7",
+        "priority": 10,
+        "subnet_key": "blue"
+      },
+      "south-worker": {
+        "description": null,
+        "id": "i-f0a806fa010e24144",
+        "priority": 20,
+        "subnet_key": "green"
+      }
+    }
+  },
+  "normalized_node_map": {
+    "sensitive": false,
+    "type": [
+      "object",
+      {
+        "audit-sidecar": [
+          "object",
+          {
+            "description": "string",
+            "enabled": "bool",
+            "instance_type": "string",
+            "key": "string",
+            "priority": "number",
+            "subnet_key": "string",
+            "tags": [
+              "map",
+              "string"
+            ],
+            "team": "string"
+          }
+        ],
+        "canary-probe": [
+          "object",
+          {
+            "description": "string",
+            "enabled": "bool",
+            "instance_type": "string",
+            "key": "string",
+            "priority": "number",
+            "subnet_key": "string",
+            "tags": [
+              "map",
+              "dynamic"
+            ],
+            "team": "dynamic"
+          }
+        ],
+        "north-api": [
+          "object",
+          {
+            "description": "dynamic",
+            "enabled": "bool",
+            "instance_type": "string",
+            "key": "string",
+            "priority": "number",
+            "subnet_key": "string",
+            "tags": [
+              "map",
+              "string"
+            ],
+            "team": "string"
+          }
+        ],
+        "south-worker": [
+          "object",
+          {
+            "description": "dynamic",
+            "enabled": "bool",
+            "instance_type": "string",
+            "key": "string",
+            "priority": "number",
+            "subnet_key": "string",
+            "tags": [
+              "map",
+              "string"
+            ],
+            "team": "string"
+          }
+        ]
+      }
+    ],
+    "value": {
+      "audit-sidecar": {
+        "description": null,
+        "enabled": false,
+        "instance_type": "t3.nano",
+        "key": "audit-sidecar",
+        "priority": 40,
+        "subnet_key": "green",
+        "tags": {
+          "Source": "yaml"
+        },
+        "team": "security"
+      },
+      "canary-probe": {
+        "description": "disabled probe",
+        "enabled": false,
+        "instance_type": "t3.nano",
+        "key": "canary-probe",
+        "priority": 30,
+        "subnet_key": "blue",
+        "tags": {},
+        "team": null
+      },
+      "north-api": {
+        "description": null,
+        "enabled": true,
+        "instance_type": "t3.micro",
+        "key": "north-api",
+        "priority": 10,
+        "subnet_key": "blue",
+        "tags": {
+          "Source": "yaml",
+          "Tier": "frontend"
+        },
+        "team": "edge"
+      },
+      "south-worker": {
+        "description": null,
+        "enabled": true,
+        "instance_type": "t3.micro",
+        "key": "south-worker",
+        "priority": 20,
+        "subnet_key": "green",
+        "tags": {
+          "Mode": "batch",
+          "Source": "json"
+        },
+        "team": "analytics"
+      }
+    }
+  },
+  "unique_teams": {
+    "sensitive": false,
+    "type": [
+      "set",
+      "string"
+    ],
+    "value": [
+      "analytics",
+      "edge",
+      "security"
+    ]
+  }
+}
