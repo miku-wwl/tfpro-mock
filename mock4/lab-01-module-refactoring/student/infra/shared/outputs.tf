@@ -1,6 +1,9 @@
 output "subnet_ids" {
-  # Deliberate defect: a map output is treated as a list.
-  value = module.network.subnet_ids[0]
+  value = module.network.subnet_ids
+}
+
+output "normalized_node_map" {
+  value = local.normalized_node_map
 }
 
 output "shared_contract" {

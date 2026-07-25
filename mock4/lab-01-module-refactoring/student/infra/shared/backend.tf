@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket                      = "tfpro-lab01-state-nimbus"
-    key                         = "REPLACE_WITH_REQUIRED_SHARED_KEY"
+    key                         = "tfpro-sim/lab-01/shared.tfstate"
     region                      = "us-east-1"
     access_key                  = "test"
     secret_key                  = "test"
