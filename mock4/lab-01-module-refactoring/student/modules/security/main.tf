@@ -4,6 +4,10 @@ resource "aws_security_group" "boundary" {
   name        = "${var.name_prefix}-${each.key}"
   description = each.value.description
   vpc_id      = var.vpc_id
+
+  tags = {
+    Name = "${var.name_prefix}-${each.key}"
+  }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "cidr" {

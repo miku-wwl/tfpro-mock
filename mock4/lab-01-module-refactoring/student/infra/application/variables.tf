@@ -10,7 +10,7 @@ variable "localstack_endpoint" {
 
 variable "ami_id" {
   type    = string
-  default = "ami-00000000000000001"
+  default = "ami-327e5696"
 }
 
 variable "subnet_specs" {

@@ -4,6 +4,7 @@ output "instance_inventory" {
       id          = instance.id
       subnet_key  = var.instances[key].subnet_key
       description = var.instances[key].description
+      priority    = var.instances[key].priority
     }
   }
 }

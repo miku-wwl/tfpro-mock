@@ -10,6 +10,7 @@ resource "aws_instance" "executor" {
   tags = merge(
     {
       Name     = "${var.name_prefix}-${each.key}"
+      WorkloadKey = each.key
       Priority = tostring(each.value.priority)
     },
     each.value.description == null ? {} : {

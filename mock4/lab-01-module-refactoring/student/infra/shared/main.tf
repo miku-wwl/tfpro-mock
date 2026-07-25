@@ -12,13 +12,13 @@ locals {
   json_nodes = [for row in local.raw_json_nodes : {
     key           = trimspace(tostring(row.key)), subnet_key = trimspace(tostring(row.subnet_key)),
     instance_type = trimspace(tostring(row.instance_type)), enabled = tobool(row.enabled),
-    priority      = tonumber(row.priority), description = try(row.description, null), team = try(row.team, null),
+    priority      = tonumber(row.priority), description = try(row.description, null) == "" ? null : try(row.description, null), team = try(row.team, null),
     tags          = tomap(try(row.tags, {}))
   }]
   yaml_nodes = [for row in local.raw_yaml_nodes : {
     key           = trimspace(tostring(row.key)), subnet_key = trimspace(tostring(row.subnet_key)),
     instance_type = trimspace(tostring(row.instance_type)), enabled = tobool(row.enabled),
-    priority      = tonumber(row.priority), description = try(row.description, null), team = try(row.team, null),
+    priority      = tonumber(row.priority), description = try(row.description, null) == "" ? null : try(row.description, null), team = try(row.team, null),
     tags          = tomap(lookup(row, "tags", {}))
   }]
   normalized_node_map = merge(
@@ -26,6 +26,11 @@ locals {
     { for node in local.json_nodes : node.key => node },
     { for node in local.yaml_nodes : node.key => node },
   )
+
+  enabled_node_map = {
+    for key, node in local.normalized_node_map : key => node
+    if node.enabled
+  }
   subnet_map = { for subnet in var.subnet_specs : subnet.key => subnet }
   security_group_specs = {
     gateway  = { description = "North-south entry" }
@@ -63,4 +68,19 @@ module "security" {
   groups      = local.security_group_specs
   cidr_rules  = local.cidr_rules
   peer_rules  = local.peer_rules
+}
+
+resource "aws_s3_bucket" "artifacts" {
+  bucket = "${random_pet.label.id}-artifact-vault"
+}
+
+resource "aws_s3_object" "manifest" {
+  bucket       = aws_s3_bucket.artifacts.id
+  key          = "manifests/runtime.txt"
+  content      = "namespace=${random_pet.label.id}\nworkloads=${join(",", sort(keys(local.enabled_node_map)))}\n"
+  content_type = "text/plain"
+}
+
+resource "aws_s3_bucket" "state_store" {
+  bucket = "tfpro-lab01-state-nimbus"
 }
