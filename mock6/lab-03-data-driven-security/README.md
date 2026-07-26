@@ -1,120 +1,71 @@
-# Lab 03 — Data-Driven Network Policy
+# 实验 03：数据驱动的网络策略
 
-## Scenario
+## 场景
 
-Quartz Relay operates an internal service platform in a pre-provisioned AWS network. The network baseline is managed by another team and must be discovered rather than recreated. Security policy is supplied by governance tooling in CSV, JSON, or YAML format, depending on the exporting system.
+Quartz Relay 在预先配置好的 AWS 网络中运行内部服务平台。网络基线由另一团队管理，必须通过发现获取，不能重新创建。安全策略由治理工具以 CSV、JSON 或 YAML 格式提供。
 
-The current Terraform configuration was recovered from an incomplete migration. It is close to the intended design, but it does not reliably compile all supported policy formats into stable security-group rule resources.
+当前 Terraform 配置来自一次未完成的迁移。它接近目标设计，但无法稳定地将所有受支持格式编译为稳定的安全组规则资源。
 
-```mermaid
-flowchart LR
-    GOV[Governance exports] --> CSV[rules.csv]
-    GOV --> JSON[rules.json]
-    GOV --> YAML[rules.yaml]
-    CSV --> TF[Terraform policy compiler]
-    JSON --> TF
-    YAML --> TF
-    DMZ[DMZ subnet] --> EDGE[Edge security group]
-    ADMIN[Administration subnet] --> CONTROL[Control security group]
-    EDGE --> LEDGER[Ledger security group]
-    EDGE --> CONTROL
-    LEDGER --> CONTROL
-    CONTROL --> EDGE
-    TF --> EDGE
-    TF --> LEDGER
-    TF --> CONTROL
-```
+## 实验条件
 
-## Exam conditions
+- 建议用时：**45 分钟**；
+- 将 bootstrap 基础设施视为另一团队管理的已有基础设施；
+- 只能在 `student/` 中工作；
+- 不得修改源数据来降低配置难度；
+- 三个输入文件描述同一套逻辑策略，必须生成等价的受管规则；
+- 下方各项结果独立评估，字母顺序不代表推荐顺序。
 
-- Suggested time limit: **45 minutes**.
-- Treat the bootstrap infrastructure as existing infrastructure owned by another team.
-- Work only in `student/`.
-- Do not change the source data to make the Terraform configuration easier.
-- The three input files represent the same logical policy and must produce equivalent managed rules.
-- The assessed outcomes below are independent; their lettering does not imply a recommended implementation order.
+## 已有环境
 
-## Existing environment
+初始化会在 LocalStack 中创建一个 VPC、两个子网和三个安全组。名称包含环境专属后缀。学生配置只接收该后缀，必须通过只读数据源发现资源 ID 和 CIDR block。
 
-The setup automation provisions one VPC, two subnets, and three security groups in LocalStack. Their names include an environment-specific suffix. The student configuration receives only that suffix and must discover identifiers and CIDR blocks through read-only data sources.
-
-| Logical role | Existing object |
+| 逻辑角色 | 已有对象 |
 |---|---|
-| `dmz` | Subnet used for public-facing traffic |
-| `admin` | Subnet used for administrative traffic |
-| `edge` | Security group for entry services |
-| `ledger` | Security group for stateful data services |
-| `control` | Security group for operational services |
+| `dmz` | 面向公网流量的子网 |
+| `admin` | 管理流量子网 |
+| `edge` | 入口服务安全组 |
+| `ledger` | 有状态数据服务安全组 |
+| `control` | 运维服务安全组 |
 
-Use the setup or reset script matching your shell. Docker Desktop, Docker Compose, Terraform CLI 1.11.x, and either Bash or PowerShell are expected.
+请运行匹配 shell 的 setup 或 reset 脚本。需要 Docker Desktop、Docker Compose、Terraform CLI 1.11.x，以及 Bash 或 PowerShell。
 
-## Required outcomes
+## 必需结果
 
-### A. Stable managed rules
+### A. 稳定的受管规则
 
-Manage all enabled ingress policy rows with exactly one `aws_vpc_security_group_ingress_rule` resource block.
+使用恰好一个 `aws_vpc_security_group_ingress_rule` 资源 block 管理所有启用的 ingress 策略行。
 
-- Use `for_each` and a `for` expression.
-- Do not use `count` for the rule resource.
-- Do not create one resource block per policy row.
-- Permanent resource addresses must not depend on array position or file order.
-- The identity must distinguish source, destination, protocol, start port, and end port.
-- Two enabled rules target `control` on TCP port `8082`; both must exist because their sources differ.
+- 使用 `for_each` 和 `for` 表达式；
+- 不得使用 `count` 或为每行创建资源 block；
+- 永久地址不得依赖数组位置或文件顺序；
+- 身份必须区分 source、destination、protocol、start port 和 end port；
+- 两条启用规则都指向 TCP `8082` 的 `control`，由于来源不同，两条都必须存在。
 
-### B. External policy formats
+### B. 外部策略格式
 
-The variable `rules_format` must accept `csv`, `json`, or `yaml`, with `csv` as its default.
+变量 `rules_format` 接受 `csv`、`json` 或 `yaml`，默认值为 `csv`。使用匹配的 Terraform 解码器，保持一条共享处理路径和一个资源 block，不得按源文件行号硬编码行为。
 
-- Use the matching Terraform decoder for each format.
-- Keep one shared rule-processing path and one rule resource block.
-- Do not hardcode behavior by source-file row number.
+### C. 规范化策略模型
 
-### C. Canonical policy model
+创建 `local.normalized_rules`，使每种输入都产生相同的 Terraform 值结构和逻辑值：`direction`、`source`、`destination`、`from_port`、`to_port`、`protocol`、`source_selector`、`description`、`enabled`。
 
-Create `local.normalized_rules` so every supported input produces the same Terraform value shape and logical values for:
+端口必须是数字或 `null`，`enabled` 必须是布尔值，协议值必须规范化。空端口字段和 `null` 表示同样的“无端口”。
 
-- `direction`
-- `source`
-- `destination`
-- `from_port`
-- `to_port`
-- `protocol`
-- `source_selector`
-- `description`
-- `enabled`
+### D. 来源解析与过滤
 
-Ports must be numbers or `null`, `enabled` must be a boolean, and protocol values must be normalized. Empty port fields and `null` values represent the same absence of a port.
+只管理启用的 ingress 行：`-` 形式的 source 必须通过 `source_selector` 解析为已有子网 CIDR；命名安全组来源必须解析为已有安全组 ID；CIDR 规则只设置 `cidr_ipv4`，安全组规则只设置 `referenced_security_group_id`；两个参数对每条规则互斥；协议 `-1` 不得带无效端口参数；VPC、子网和安全组必须动态获取，不得使用固定 ID 或固定环境 CIDR。
 
-### D. Source resolution and filtering
+### E. 检查输出
 
-Only enabled ingress rows are managed.
+提供以下输出，值必须来自规范化策略和受管资源：`normalized_rules`、`ingress_rule_keys`、`rules_by_destination`、`rules_count_by_protocol`、`source_types`、`created_rule_ids`。
 
-- A source value of `-` is meaningful and must be resolved through `source_selector` to an existing subnet CIDR.
-- A named security-group source must resolve to an existing security-group identifier.
-- CIDR-based rules set only `cidr_ipv4`.
-- Security-group-based rules set only `referenced_security_group_id`.
-- The two arguments are mutually exclusive for every managed rule.
-- A protocol value of `-1` must be represented without invalid port arguments.
-- Existing VPC, subnet, and security-group values must be obtained dynamically; no fixed cloud identifiers or fixed environment CIDRs are permitted.
+`ingress_rule_keys` 必须能证明两个 `control` TCP `8082` 规则拥有不同地址。以 list 暴露的集合必须保持 list 语义。
 
-### E. Inspection outputs
+## 完成约束
 
-Provide these outputs with values derived from the canonical policy and managed resources:
-
-- `normalized_rules`
-- `ingress_rule_keys`
-- `rules_by_destination`
-- `rules_count_by_protocol`
-- `source_types`
-- `created_rule_ids`
-
-`ingress_rule_keys` must make it possible to verify that the two `control` TCP `8082` rules have distinct addresses. Collections exposed as lists must have list semantics rather than unordered set semantics.
-
-## Completion constraints
-
-- Reordering rows in any input file must not change the resource-address set.
-- Egress and disabled rows must not be managed.
-- All three formats must describe the same resulting policy.
-- Do not modify bootstrap resources.
-- Do not add real cloud credentials, provider binaries, generated plans, or local state files to the submission.
-- This is an original practice scenario and is not represented as an official exam question.
+- 重新排列任意输入文件的行，不得改变资源地址集合；
+- 不得管理 egress 和禁用行；
+- 三种格式必须描述相同策略；
+- 不得修改 bootstrap 资源；
+- 不得提交真实凭据、provider 二进制、生成的 plan 或本地状态文件；
+- 本实验为原创练习场景，不代表官方考试题目。

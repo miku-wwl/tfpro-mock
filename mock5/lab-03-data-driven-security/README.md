@@ -1,157 +1,156 @@
-# Lab 03 — Data-Driven Security Rules
+# 实验 03：数据驱动的安全规则
 
-> Independent Terraform Professional practice material. This lab is not an official HashiCorp exam question and does not claim to reproduce one.
+> 独立的 Terraform Professional 练习材料。本实验不代表 HashiCorp 官方考试题目，也不声称复现官方题目。
 
-## Scenario
+## 场景
 
-A platform team already provisioned a VPC, two subnets, and three security groups in a LocalStack AWS account. Security policy rows now arrive in CSV, JSON, or YAML. Your job is to repair the starter configuration so that one Terraform implementation produces the same security-group rules from every supported format.
+平台团队已经在 LocalStack AWS 账户中创建了一个 VPC、两个子网和三个安全组。现在，安全策略行可能来自 CSV、JSON 或 YAML。你的任务是修复初始配置，使同一套 Terraform 实现能够根据任意一种受支持的格式生成相同的安全组规则。
 
-The starter is intentionally close to complete but contains implementation traps. A result that merely looks correct in AWS is not sufficient: the required resource type, block count, file ownership, data sources, output contracts, and stable resource addresses are all assessed.
+初始代码看似接近完成，但故意包含多个实现陷阱。仅仅让 AWS 中的结果看起来正确并不足够；资源类型、block 数量、文件归属、数据源、输出接口和稳定资源地址都会被检查。
 
-**Target time:** 45–55 minutes  
-**Target difficulty:** Terraform Professional 92–96/100
+**建议用时：**45–55 分钟
+**目标难度：**Terraform Professional 92–96 / 100
 
-## Working boundaries
+## 工作边界
 
-- Run the infrastructure bootstrap from `bootstrap/`; treat that directory as read-only during the exercise.
-- Make candidate changes only under `student/`.
-- The candidate configuration is a **root-module-only** implementation. Do not introduce child modules.
-- All AWS data sources and the ingress resource must remain in the candidate root module. A child module that reads or owns them is non-compliant even if it works.
-- Do not create the VPC, subnets, or security groups in `student/`; discover them dynamically.
-- Do not edit Terraform state JSON directly.
+- 从 `bootstrap/` 执行基础设施初始化；实验期间将该目录视为只读。
+- 候选代码只能修改 `student/` 下的内容。
+- 候选配置必须是**仅包含根模块**的实现，不得引入子模块。
+- 所有 AWS 数据源和入站规则资源都必须保留在候选根模块中。即使能够正常运行，由子模块读取或管理它们也不符合要求。
+- 不得在 `student/` 中创建 VPC、子网或安全组，必须动态发现它们。
+- 不得直接编辑 Terraform 状态 JSON。
 
-## Execution contract
+## 执行约定
 
-| Item | Required contract |
+| 项目 | 必需约定 |
 |---|---|
 | Terraform CLI | `1.11.x` |
-| Provider identity | The unaliased/default `hashicorp/aws` provider configured for the LocalStack endpoint |
-| Backend | Local backend only |
-| Backend key | **Not applicable for the local backend**; do not add S3, HCP Terraform, or another remote backend. The active state filename remains `terraform.tfstate` in the working directory. |
-| Candidate module boundary | Root module only; no child modules |
-| Resource type | `aws_vpc_security_group_ingress_rule` |
-| Resource block count | Exactly **one** candidate ingress resource block |
-| Resource location | `student/main.tf` |
-| Iteration | `for_each` fed by a `for` expression |
-| Forbidden iteration | `count`, `count.index`, or an input-list index used as a persistent key |
-| Data-source location | `student/data_sources.tf` |
-| Normalization location | `student/locals.tf` |
-| Output location | `student/outputs.tf` |
+| Provider 身份 | 配置为 LocalStack endpoint 的未命名/默认 `hashicorp/aws` provider |
+| 后端 | 仅使用本地后端 |
+| 后端 key | **不适用于本地后端**；不得添加 S3、HCP Terraform 或其他远程后端。活动状态文件仍为工作目录中的 `terraform.tfstate`。 |
+| 候选模块边界 | 仅根模块，不得有子模块 |
+| 资源类型 | `aws_vpc_security_group_ingress_rule` |
+| Resource block 数量 | 候选代码中恰好 1 个入站资源 block |
+| 资源位置 | `student/main.tf` |
+| 迭代方式 | 由 `for` 表达式提供数据的 `for_each` |
+| 禁止的迭代方式 | `count`、`count.index`，或将输入列表索引作为持久 key |
+| 数据源位置 | `student/data_sources.tf` |
+| 规范化位置 | `student/locals.tf` |
+| 输出位置 | `student/outputs.tf` |
 
-Alternative resource types, repeated resource blocks, manually declared rules, or a broad `lifecycle.ignore_changes` do not satisfy this contract.
+使用其他资源类型、重复资源 block、手动声明规则，或宽泛的 `lifecycle.ignore_changes`，均不符合约定。
 
-## Environment setup
+## 环境初始化
 
-Prerequisites:
+前置条件：
 
-- Docker Desktop with Docker Compose
-- Terraform CLI 1.11.x
-- Bash or PowerShell
-- Python 3 for the shuffle helper
+- Docker Desktop 和 Docker Compose；
+- Terraform CLI 1.11.x；
+- Bash 或 PowerShell；
+- Python 3，用于运行 shuffle 辅助脚本。
 
-Start LocalStack and create the pre-existing resources:
+启动 LocalStack 并创建已有资源：
 
 ```bash
 ./scripts/setup.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/setup.ps1
 ```
+初始化脚本会创建一个带标签的 VPC、两个带标签的子网（角色为 `public` 和 `administration`），以及三个带标签的安全组（角色为 `frontend`、`datastore` 和 `operations`）。它们的 AWS 名称包含生成的后缀。候选代码必须使用数据源和标签，而不能使用复制的 ID 或固定名称。
 
-The bootstrap creates one tagged VPC, two tagged subnets (`public` and `administration` roles), and three tagged security groups (`frontend`, `datastore`, and `operations` roles). Their AWS names include a generated suffix. Candidate code must use data sources and tags rather than copied IDs or fixed names.
+## 任务 1：读取一种外部格式
 
-## Task 1 — Read one external format
+在 `student/variables.tf` 中定义并保留 `variable "rules_format"`。
 
-Define and retain `variable "rules_format"` in `student/variables.tf`.
+- 允许的值：`csv`、`json`、`yaml`；
+- 默认值：`csv`；
+- CSV 必须使用 `csvdecode` 解码；
+- JSON 必须使用 `jsondecode` 解码；
+- YAML 必须使用 `yamldecode` 解码；
+- 不得复制三套资源逻辑。
 
-- Allowed values: `csv`, `json`, `yaml`
-- Default: `csv`
-- CSV must be decoded with `csvdecode`.
-- JSON must be decoded with `jsondecode`.
-- YAML must be decoded with `yamldecode`.
-- Do not create three copies of the resource logic.
+`student/data/` 下的文件描述同一组策略。CSV 中的端口和布尔值以字符串形式提供；JSON 和 YAML 可能包含数字、布尔值或 `null`。
 
-The files under `student/data/` describe the same policy set. CSV ports and booleans arrive as strings; JSON and YAML may contain numbers, booleans, or `null`.
+## 任务 2：发现已有网络
 
-## Task 2 — Discover the existing network
+使用 AWS 数据源，在运行时获取：
 
-Use AWS data sources to obtain, at runtime:
+- VPC ID；
+- 两个子网的 ID 和 CIDR block；
+- 三个安全组的 ID。
 
-- the VPC ID;
-- both subnet IDs and CIDR blocks;
-- all three security-group IDs.
+使用 bootstrap 标签识别资源。初始代码中包含故意设置的固定值后备方案，完成后不得保留。不得将 CLI 输出中的 ID 复制到 Terraform 代码中。
 
-Use the bootstrap tags to identify resources. The starter contains deliberate fixed-value fallbacks that must not survive in the completed solution. Do not copy IDs from CLI output into Terraform code.
+## 任务 3：规范化策略对象
 
-## Task 3 — Normalize the policy objects
+在 `student/locals.tf` 中创建 `local.normalized_rules`。每个元素都必须暴露以下属性，并确保 CSV、JSON 和 YAML 的 Terraform 类型一致：
 
-Create `local.normalized_rules` in `student/locals.tf`. Every element must expose exactly these attributes with consistent Terraform types across CSV, JSON, and YAML:
+- `direction`：字符串；
+- `source`：字符串；
+- `destination`：字符串；
+- `from_port`：数字或 `null`；
+- `to_port`：数字或 `null`；
+- `protocol`：字符串；
+- `source_selector`：字符串；
+- `description`：字符串；
+- `enabled`：布尔值。
 
-- `direction` — string
-- `source` — string
-- `destination` — string
-- `from_port` — number or `null`
-- `to_port` — number or `null`
-- `protocol` — string
-- `source_selector` — string
-- `description` — string
-- `enabled` — bool
+应在适当位置统一大小写，不得根据行号或当前位置对记录进行特殊处理。
 
-Normalize case where appropriate and do not special-case rows by their line number or current position.
+## 任务 4：在创建资源前完成过滤
 
-## Task 4 — Filter before resource creation
+只有同时满足以下条件的记录才能进入资源：
 
-Only rows where both conditions are true may reach the resource:
+- `direction == "ingress"`；
+- `enabled == true`。
 
-- `direction == "ingress"`
-- `enabled == true`
+题目提供的数据中故意包含一条 egress 记录和一条禁用的 ingress 记录。两者都不得出现在受管资源实例中。
 
-The supplied data intentionally includes an egress row and a disabled ingress row. Both must be absent from the managed resource instances.
+## 任务 5：构建稳定的规则实例
 
-## Task 5 — Build stable rule instances
+在 `student/main.tf` 中保留恰好一个 `aws_vpc_security_group_ingress_rule` block，并使用 `for_each`。
 
-In `student/main.tf`, retain exactly one block of type `aws_vpc_security_group_ingress_rule` and use `for_each`.
+永久实例 key 必须唯一、确定性，并且与输入顺序无关。至少必须区分：
 
-The permanent instance key must be unique, deterministic, and independent of input order. It must distinguish at least:
+- 源身份；
+- 目标；
+- 协议；
+- 起始端口；
+- 结束端口。
 
-- source identity;
-- destination;
-- protocol;
-- from port;
-- to port.
+有两条启用规则都指向 `operations` 安全组的 TCP 端口 `8082`，但来源安全组不同。两条规则都必须存在，并且资源地址不同。
 
-Two enabled rules target the `operations` security group on TCP port `8082`, but they come from different security groups. Both must exist with different resource addresses.
+源的处理语义：
 
-Source semantics:
+- 当 `source == "-"` 时，使用 `source_selector` 选择已发现的子网 CIDR，只设置 `cidr_ipv4`；
+- 当 `source` 命名安全组角色时，只设置 `referenced_security_group_id`；
+- 对每个实例而言，`cidr_ipv4` 和 `referenced_security_group_id` 互斥；
+- 对于协议 `-1`，端口参数必须按缺省值处理，而不是空字符串。
 
-- When `source == "-"`, use `source_selector` to select a discovered subnet CIDR. Set only `cidr_ipv4`.
-- When `source` names a security-group role, set only `referenced_security_group_id`.
-- `cidr_ipv4` and `referenced_security_group_id` are mutually exclusive for every instance.
-- For protocol `-1`, port arguments must be handled as absent rather than empty strings.
+即使远端规则看起来相似，使用 `count`、多个入站资源 block、基于索引的 key 或其他安全组规则资源类型，也属于部分完成失败。
 
-Using `count`, multiple ingress resource blocks, index-based keys, or a different security-group-rule resource type is a partial-completion failure even if the remote rules look similar.
+## 任务 6：生成精确输出
 
-## Task 6 — Produce the exact outputs
+在 `student/outputs.tf` 中创建全部六个输出。值必须来自解码后的数据、数据源、locals 或受管资源，禁止硬编码输出内容。
 
-Create all six outputs in `student/outputs.tf`. Values must be computed from decoded data, data sources, locals, or managed resources; hard-coded output payloads are forbidden.
-
-| Output name | Required Terraform type |
+| 输出名称 | 必需 Terraform 类型 |
 |---|---|
 | `normalized_rules` | `list(object({ direction=string, source=string, destination=string, from_port=number|null, to_port=number|null, protocol=string, source_selector=string, description=string, enabled=bool }))` |
-| `ingress_rule_keys` | `list(string)` sorted deterministically |
-| `rules_by_destination` | `map(list(object(...)))` grouped from the enabled ingress rules |
+| `ingress_rule_keys` | `list(string)`，按确定性排序 |
+| `rules_by_destination` | `map(list(object(...)))`，根据启用的 ingress 规则分组 |
 | `rules_count_by_protocol` | `map(number)` |
-| `source_types` | `set(string)` containing the source categories represented by enabled ingress rules |
-| `created_rule_ids` | `map(string)` keyed by the permanent `for_each` keys |
+| `source_types` | `set(string)`，包含启用 ingress 规则所代表的来源类别 |
+| `created_rule_ids` | `map(string)`，以永久 `for_each` key 为 key |
 
-`ingress_rule_keys` must make it possible to verify that both `operations:8082` rules have different keys.
+`ingress_rule_keys` 必须能够证明两个 `operations:8082` 规则使用了不同的 key。
 
-## Task 7 — Prove format and order independence
+## 任务 7：证明格式和顺序无关
 
-For each format:
+分别对每种格式执行：
 
 ```bash
 terraform -chdir=student plan -var='rules_format=csv'
@@ -159,47 +158,47 @@ terraform -chdir=student plan -var='rules_format=json'
 terraform -chdir=student plan -var='rules_format=yaml'
 ```
 
-After a correct apply, all three plans must describe the same ten enabled ingress rules.
+正确 apply 后，三次 plan 都必须描述相同的十条启用 ingress 规则。
 
-Then randomize the row/list order:
+然后随机调整行/列表顺序：
 
 ```bash
 ./scripts/shuffle-input.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/shuffle-input.ps1
 ```
 
-A correct implementation keeps every `aws_vpc_security_group_ingress_rule.managed["..."]` address stable. Reordering must not cause delete/create actions or output-only drift.
+正确实现必须保持每个 `aws_vpc_security_group_ingress_rule.managed["..."]` 地址稳定。重新排序不得导致删除/创建操作，也不得产生仅由输出变化造成的漂移。
 
-## Completion standard
+## 完成标准
 
-A completed lab must satisfy all implementation contracts, not just remote AWS state:
+完成的实验必须满足全部实现约定，而不只是远端 AWS 状态看起来正确：
 
-- exactly one required ingress resource block in the required file;
-- only `for_each`, with a stable semantic key;
-- data-source-based VPC, subnet, CIDR, and security-group lookup;
-- equivalent CSV, JSON, and YAML normalization;
-- ten enabled ingress instances;
-- two distinct `operations` TCP/8082 instances from different source security groups;
-- no egress or disabled instance;
-- mutual exclusivity of CIDR and referenced-SG source arguments;
-- correct all-protocol handling;
-- all six outputs with the stated names and types;
-- clean plan after format switching and input shuffling.
+- 在指定文件中恰好有一个要求的入站资源 block；
+- 只使用带稳定语义 key 的 `for_each`；
+- 基于数据源查找 VPC、子网、CIDR 和安全组；
+- CSV、JSON 和 YAML 规范化结果等价；
+- 十个启用的 ingress 实例；
+- 两个来自不同源安全组的 `operations` TCP/8082 实例；
+- 不存在 egress 或禁用实例；
+- CIDR 与引用安全组来源参数互斥；
+- 正确处理全协议规则；
+- 六个输出的名称和类型均正确；
+- 切换格式和打乱输入顺序后 plan 仍然干净。
 
-Use `VALIDATION.md` from the separately supplied solution package for the full review procedure. There is no automatic grader.
+完整检查流程请使用随 solution package 单独提供的 `VALIDATION.md`。本实验没有自动评分器。
 
-## Cleanup
+## 清理环境
 
 ```bash
 ./scripts/reset.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/reset.ps1

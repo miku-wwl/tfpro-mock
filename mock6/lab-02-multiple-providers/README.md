@@ -1,134 +1,68 @@
-# Lab 02 — Segmented AWS Provider Operations
+# 实验 02：分层的 AWS Provider 操作
 
-> Independent Terraform Professional practice lab. This is not an official exam item.
+> 独立的 Terraform Professional 练习实验，不代表官方考试题目。
 
-## Scenario
+## 场景
 
-Northstar Media is separating operational duties for a regional batch-processing platform. The existing Terraform state was produced before the identity model, provider ownership rules, and object-resource standard were updated.
+Northstar Media 正在为区域批处理平台拆分运维职责。现有 Terraform 状态是在身份模型、provider 归属规则和对象资源规范更新之前生成的。
 
-The remote environment is already running. Your job is to repair the configuration and state mapping without interrupting the stored release artifact or changing the active worker count.
+远端环境已经运行。你的任务是在不影响已保存的发布制品、也不改变当前工作节点数量的前提下，修复配置和状态映射。
 
-**Target time:** 50 minutes
+**建议用时：**50 分钟
+**Terraform CLI：**1.11.x
+**执行环境：**`us-east-1` 中的 LocalStack
 
-**Terraform CLI:** 1.11.x
+## 环境状态
 
-**Execution target:** LocalStack in `us-east-1`
+初始化脚本会准备三个可供 LocalStack assume 的 IAM 角色、一个 launch template、一个 Auto Scaling Group（远端 desired capacity 为 `1`）、一个受管 IAM 角色及内联策略、一个包含精确内容 `ORIGINAL-CONTENT` 的 `artifact.txt` 存储桶对象，以及记录为 `aws_s3_bucket_object.legacy_artifact` 的初始状态。`.exam/` 中还包含非答案基线证据。
 
-```mermaid
-flowchart LR
-    CFG[Shared AWS config] --> C[aws.compute]
-    CREDS[Shared AWS credentials] --> C
-    CFG --> I[aws.identity]
-    CREDS --> I
-    CFG --> R[aws.readonly]
-    CREDS --> R
+请根据使用的 shell 运行对应的 Bash 或 PowerShell 脚本。reset 脚本会丢弃所有候选修改并重建初始环境。
 
-    C --> CM[Compute module]
-    I --> IM[Identity module]
-    I --> SM[Storage module]
-    R --> DS[Caller identity data source]
+## 完成条件
 
-    SM --> B[(Artifact bucket)]
-    B --> O[artifact.txt]
-    CM --> ASG[Batch worker group]
-```
+完成以下五项任务。最终 plan 不得包含创建、更新、删除或替换操作。
 
-## Environment state
+### 任务 1：重建共享身份文件
 
-The platform-specific setup script prepares:
-
-- three assumable LocalStack IAM roles for compute, identity, and read-only operations;
-- one launch template and one Auto Scaling group whose remote desired capacity is `1`;
-- one managed IAM role and inline policy;
-- one S3 bucket containing `artifact.txt` with the exact content `ORIGINAL-CONTENT`;
-- a Terraform state in `student/terraform.tfstate` where the object is currently recorded as `aws_s3_bucket_object.legacy_artifact`;
-- non-answer baseline evidence under `.exam/`.
-
-Use the Bash or PowerShell setup script that matches your workstation. The reset script discards all candidate changes and reconstructs the initial environment.
-
-## Completion conditions
-
-Complete all five tasks. The final plan must report no create, update, delete, or replacement actions.
-
-### Task 1 — Rebuild the shared identity files
-
-Create these files:
+创建：
 
 - `student/.aws/config`
 - `student/.aws/credentials`
 
-The config file must contain exactly these role profiles and no `default` profile:
+配置文件必须恰好包含以下角色 profile，且不得包含 `default`：`compute-operator`、`identity-operator`、`readonly-auditor`。每个 profile 必须使用 `us-east-1`、JSON 输出、对应角色 ARN 和不同的 `source_profile`。
 
-- `compute-operator`
-- `identity-operator`
-- `readonly-auditor`
+凭据文件必须恰好包含以下仅供 LocalStack 使用的 source profile：`compute-origin`、`identity-origin`、`audit-origin`。
 
-Every role profile must use `us-east-1`, JSON output, the appropriate role ARN, and a distinct `source_profile`.
+不得在本实验任何位置放置长期凭据或真实 AWS 凭据。
 
-The credentials file must contain exactly these LocalStack-only source profiles:
+### 任务 2：强制 provider 归属
 
-- `compute-origin`
-- `identity-origin`
-- `audit-origin`
-
-Do not place long-lived or real AWS credentials anywhere in this lab.
-
-### Task 2 — Enforce provider ownership
-
-The root module must expose exactly these aliased AWS provider configurations for workload use:
+根模块必须暴露以下 aliased AWS provider：
 
 - `aws.compute`
 - `aws.identity`
 - `aws.readonly`
 
-Apply these ownership rules:
+归属规则如下：compute 模块使用 `aws.compute`；identity 模块使用 `aws.identity`；storage 模块使用 `aws.identity`；`data.aws_caller_identity.current` 使用 `aws.readonly`。每个模块都必须由根模块显式接收 provider；子模块必须声明接受的 alias，不得创建独立配置；任何资源或数据源都不得依赖默认 provider 的隐式继承。
 
-- the compute module uses `aws.compute`;
-- the identity module uses `aws.identity`;
-- the storage module uses `aws.identity`;
-- `data.aws_caller_identity.current` uses `aws.readonly`;
-- each module receives its provider explicitly from the root module;
-- child modules declare the aliases they accept and do not create independent AWS provider configurations;
-- no resource or data source may rely on implicit default-provider inheritance.
+### 任务 3：安全升级 AWS provider
 
-### Task 3 — Upgrade the AWS provider safely
+将过时的精确版本锁定替换为明确的兼容范围，该范围必须允许 `5.80.0` 及以上版本、排除 `6.0.0` 及更高版本，且不能是无上限约束或 `latest`。刷新依赖锁文件，使其与约束一致；初始化必须无版本冲突。
 
-Replace the obsolete exact provider pin with an explicit compatible range that:
+### 任务 4：在不修改远端的情况下处理对象
 
-- allows AWS provider versions from `5.80.0` inclusive;
-- excludes version `6.0.0` and later;
-- is not an unbounded or `latest` selection.
+已有 `artifact.txt` 最终必须使用地址 `aws_s3_object.artifact`，并满足：
 
-Refresh the dependency lock file so it agrees with the selected constraint. Initialization must complete without a provider-version conflict.
+- `aws_s3_bucket_object.legacy_artifact` 同时从配置和状态中移除；
+- 存储桶和对象 key 不变；
+- 内容仍精确为 `ORIGINAL-CONTENT`，且末尾没有换行；
+- 对象没有被删除、重新创建或覆盖；
+- 不得直接编辑 Terraform 状态 JSON。
 
-### Task 4 — Reconcile the existing object without remote mutation
+### 任务 5：保留外部控制的容量
 
-The existing `artifact.txt` object must finish under this resource address:
+配置继续声明 desired capacity 为 `2`，远端 Auto Scaling Group 保持为 `1`。Terraform 只能忽略 desired-capacity 属性的漂移，仍须检测其他受管属性变化，且资源必须继续保留在状态中。
 
-`aws_s3_object.artifact`
+## 提交证据
 
-The final result must satisfy all of the following:
-
-- `aws_s3_bucket_object.legacy_artifact` is absent from both configuration and state;
-- the bucket and object key do not change;
-- the object body remains exactly `ORIGINAL-CONTENT` with no trailing newline;
-- the object is not deleted, recreated, or overwritten;
-- no direct editing of Terraform state JSON is permitted.
-
-### Task 5 — Preserve externally controlled capacity
-
-The configuration must continue to declare a desired capacity of `2`, while the remote Auto Scaling group remains at `1`.
-
-Terraform must ignore drift for only the desired-capacity attribute. It must continue to detect changes to all other managed attributes, and the resource must remain in state.
-
-## Submission evidence
-
-Before considering the lab complete, confirm that:
-
-- the required profile and credential files exist with only the permitted sections;
-- all AWS consumers use explicit provider ownership;
-- the dependency lock agrees with the provider constraint;
-- the legacy object address is gone and the target address exists;
-- the object identity and exact body match the baseline evidence;
-- the remote desired capacity is still `1`;
-- the final plan is clean.
+完成前确认：profile 和凭据文件只包含允许的段；所有 AWS 使用方都明确指定 provider；锁文件与约束一致；旧对象地址已消失且目标地址存在；对象身份和内容与基线一致；远端 desired capacity 仍为 `1`；最终 plan 干净。

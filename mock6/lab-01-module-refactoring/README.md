@@ -1,51 +1,28 @@
-# Terraform Professional Final Closed-Book Simulation
+# Terraform Professional 终局闭卷模拟练习
 
-## Lab 1 — Northstar Relay Platform Refactor
+## 实验 1：Northstar Relay 平台重构
 
-**Suggested time:** 70 minutes  
-**Difficulty target:** Advanced professional-level practice  
-**Delivery mode:** Closed book, individual work
+**建议用时：**70 分钟
+**目标难度：**高级专业级练习
+**形式：**闭卷、独立完成
 
-This independent practice lab is not an official HashiCorp examination question.
+本实验为独立编写的练习内容，不代表 HashiCorp 官方考试题目。
 
-## Scenario
+## 场景
 
-Northstar Relay operates a small message-processing platform in AWS. The platform was initially delivered as one Terraform root module and now needs to be separated between the platform foundation team and the application runtime team.
+Northstar Relay 在 AWS 上运行一个小型消息处理平台。平台最初由一个 Terraform 根模块交付，现在需要在平台基础团队和应用运行时团队之间拆分管理。
 
-The existing remote resources are already running. Their identifiers form the baseline for this lab. The refactor must preserve those resources while introducing clear child-module boundaries and two independently managed root modules.
+现有远端资源已经运行，其标识符构成本实验的基线。重构必须保留这些资源，同时建立清晰的子模块边界和两个可独立管理的根模块。
 
-```mermaid
-flowchart LR
-    subgraph SharedState[Shared root state]
-        Naming[Shared naming value]
-        Network[VPC and two subnets]
-        Security[Security groups and rules]
-        Storage[Artifact bucket and object]
-    end
+## 初始环境
 
-    subgraph ApplicationState[Application root state]
-        Identity[IAM role and instance profile]
-        Compute[Two workload instances]
-    end
+`student/` 目录包含初始化脚本准备好的单体根模块和本地状态。配置描述的是已部署环境，初始状态应当没有基础设施变更。
 
-    SharedState -->|published root outputs| ApplicationState
-    Network --> Security
-    Network --> Compute
-    Security --> Compute
-    Naming --> Storage
-    Naming --> Identity
-    Identity --> Compute
-```
+此外还提供了一个部分准备好的模块工作区。它代表未完成的内部重构，只能作为需要审查的工程代码，不能视为权威实现。
 
-## Starting Environment
+初始化脚本会将运行时生成的基线证据写入 `baseline/`。其中记录的已有资源标识符必须保持不变。
 
-The `student/` directory contains the active monolithic root module and local state prepared by the setup script. The configuration models the deployed environment and should begin with no infrastructure changes.
-
-A partially prepared module workspace is also present. It reflects an unfinished internal refactor and must be reviewed as engineering work, not treated as authoritative.
-
-Runtime-generated baseline evidence is written to `baseline/` by the setup script. Existing resource identifiers recorded there must remain unchanged.
-
-## Required Final Layout
+## 最终目录结构
 
 ```text
 student/
@@ -59,79 +36,79 @@ student/
     └── compute/
 ```
 
-The final ownership boundaries are:
+最终资源归属如下：
 
-| Component | Required owner |
+| 组件 | 必需归属 |
 |---|---|
-| VPC and subnets | `modules/network` through the shared root |
-| Security groups and security-group rules | `modules/security` through the shared root |
-| IAM role and instance profile | `modules/identity` through the application root |
-| EC2 instances | `modules/compute` through the application root |
-| Shared naming value, S3 bucket, and S3 object | Shared root |
+| VPC 和子网 | `modules/network`，由 shared 根模块调用 |
+| 安全组和安全组规则 | `modules/security`，由 shared 根模块调用 |
+| IAM 角色和实例配置文件 | `modules/identity`，由 application 根模块调用 |
+| EC2 实例 | `modules/compute`，由 application 根模块调用 |
+| 共享命名值、S3 存储桶和 S3 对象 | Shared 根模块 |
 
-## Examination Tasks
+## 实验任务
 
-### Task 1 — Protect the baseline
+### 任务 1：保护基线
 
-Review the current configuration, state, outputs, and generated baseline evidence. Establish that the monolithic root describes the running environment without pending changes. Record any resource addresses needed for your own work.
+检查当前配置、状态、输出和生成的基线证据。确认单体根模块描述的是正在运行的环境，且没有待处理变更。记录后续需要使用的资源地址。
 
-All existing VPC, subnet, security-group, IAM, EC2, bucket, and object identifiers must be preserved throughout the lab.
+实验期间必须保留所有已有 VPC、子网、安全组、IAM、EC2、存储桶和对象的标识符。
 
-### Task 2 — Complete the child-module refactor
+### 任务 2：完成子模块重构
 
-Move the existing resources into the required child modules and provide each module with a clear `main.tf`, `variables.tf`, and `outputs.tf` interface.
+将已有资源移入指定子模块，并为每个模块提供清晰的 `main.tf`、`variables.tf` 和 `outputs.tf` 接口。
 
-Child modules must not reference resources inside sibling modules. Cross-module values must pass through a root module. Resource identifiers must not be hardcoded.
+子模块不得引用兄弟模块中的资源。跨模块值必须经过根模块传递。不得硬编码资源标识符。
 
-Preserve the existing repetition models: the subnet resources remain count-based and the compute instances remain for-each-based.
+保留现有的重复模型：子网资源继续使用 `count`，计算实例继续使用 `for_each`。
 
-### Task 3 — Repair the dependency contracts
+### 任务 3：修复依赖接口
 
-Make the module interfaces type-safe and complete so that:
+完善模块接口并确保类型安全：
 
-- the security module receives the VPC identifier;
-- the compute module receives subnet identifiers, security-group identifiers, and the instance-profile name;
-- the application root consumes the shared naming value;
-- at least one map-shaped module output is consumed by another module through a root module;
-- list, set, map, and object values retain deliberate and compatible types.
+- security 模块接收 VPC 标识符；
+- compute 模块接收子网标识符、安全组标识符和实例配置文件名称；
+- application 根模块使用 shared 命名值；
+- 至少有一个 map 类型的模块输出经由根模块被另一个模块使用；
+- list、set、map 和 object 值必须保持有意且兼容的类型。
 
-The partially prepared module workspace contains assumptions that are not all mutually compatible. Resolve them without weakening variable types to `any`.
+部分准备好的模块工作区包含互不完全兼容的假设。请在不将变量类型弱化为 `any` 的情况下解决这些问题。
 
-### Task 4 — Align state ownership with the new addresses
+### 任务 4：使状态归属与新地址一致
 
-Transition the existing managed objects from their legacy root addresses to the final module addresses without recreating, replacing, or deleting any remote object.
+将现有受管对象从旧根地址迁移到最终模块地址，不得重新创建、替换或删除任何远端对象。
 
-The final state must contain the correct addresses for ordinary resources, the count-based subnets, and the for-each-based instances. No legacy monolithic address may remain.
+最终状态必须包含普通资源、基于 `count` 的子网和基于 `for_each` 的实例的正确地址。不得残留单体根模块的旧地址。
 
-### Task 5 — Split the roots and states
+### 任务 5：拆分根模块和状态
 
-Create the `shared` and `application` root modules and place each resource under the required ownership boundary.
+创建 `shared` 和 `application` 根模块，并将每个资源放入规定的归属范围。
 
-Both roots must use the existing S3 state bucket. Their backend keys must be exactly:
+两个根模块都必须使用已有 S3 状态存储桶，后端 key 必须严格为：
 
 ```text
 tfpro-sim/final-06/lab-01/shared.tfstate
 tfpro-sim/final-06/lab-01/application.tfstate
 ```
 
-The application root must read the shared root outputs through remote state. Only a root module may access remote state; child modules must not do so.
+application 根模块必须通过远程状态读取 shared 根模块输出。只有根模块可以访问远程状态；子模块不得访问远程状态。
 
-At completion:
+完成时：
 
-- the shared state contains only shared-owned resources;
-- the application state contains only application-owned resources;
-- both roots report zero additions, zero changes, and zero destructions;
-- no existing baseline identifier has changed;
-- no broad lifecycle suppression is used to conceal configuration drift.
+- shared 状态只包含 shared 资源；
+- application 状态只包含 application 资源；
+- 两个根模块都报告零新增、零变更、零销毁；
+- 所有基线标识符均未改变；
+- 不得使用宽泛的生命周期抑制规则掩盖配置漂移。
 
-## Exact Constraints
+## 精确约束
 
-1. The two backend keys are case-sensitive and must match exactly.
-2. The generated naming value remains owned by the shared state and is consumed by the application root through an explicit output contract.
-3. Existing resources may not be replaced, recreated, or abandoned as unmanaged infrastructure.
-4. Child modules may not contain backend or remote-state configuration.
-5. Provider binaries, credentials, plan binaries, and local runtime directories must not be committed to the lab directory.
+1. 两个后端 key 区分大小写，必须完全匹配。
+2. 生成的命名值继续由 shared 状态管理，并通过明确的输出接口供 application 根模块使用。
+3. 不得替换、重新创建或放弃管理任何已有资源。
+4. 子模块不得包含 backend 或远程状态配置。
+5. 不得将 provider 二进制、凭据、plan 二进制或本地运行时目录提交到实验目录。
 
-## Completion Evidence
+## 完成证据
 
-Use `CHECKLIST.md` for a non-prescriptive completion review. Environment startup, reset, and static validation entry points are documented in `ENVIRONMENT.md`.
+使用 `CHECKLIST.md` 进行完成检查。环境启动、重置和静态验证入口记录在 `ENVIRONMENT.md` 中。

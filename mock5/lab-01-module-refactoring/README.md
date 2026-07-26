@@ -1,31 +1,31 @@
-# Lab 01 — State-Preserving Module Refactoring
+# 实验 01：保留状态的模块重构
 
-> Independent Terraform Professional-style practice lab. This is not an official HashiCorp exam question.
+> 独立的 Terraform Professional 风格练习实验，不代表 HashiCorp 官方考试题目。
 
-## Scenario
+## 场景
 
-A small operations platform already exists in AWS-compatible infrastructure. Its Terraform configuration is a single legacy root module, and its local state contains all resources. Your assignment is to refactor the configuration into four child modules, divide ownership between two root modules, migrate the state to two S3 backend keys, and finish with no infrastructure replacement.
+一个小型运维平台已经运行在兼容 AWS 的基础设施上。其 Terraform 配置仍是单一的旧版根模块，本地状态包含全部资源。你的任务是将配置重构为四个子模块，在两个根模块之间划分资源归属，将状态迁移到两个 S3 后端 key，并确保整个过程不替换任何现有基础设施。
 
-**Target time:** 70–80 minutes  
-**Difficulty target:** 90–95 / 100  
-**Primary environment:** Terraform CLI 1.11.x, Docker Desktop, Docker Compose, and LocalStack
+**建议用时：**70–80 分钟
+**目标难度：**90–95 / 100
+**主要环境：**Terraform CLI 1.11.x、Docker Desktop、Docker Compose 和 LocalStack
 
-The visible AWS result is not the only acceptance criterion. Exact implementation requirements below are independently checked.
+可见的 AWS 结果并不是唯一验收标准。下方的精确实现要求会分别进行检查。
 
-## Start and safety rules
+## 开始与安全规则
 
-1. Run the environment setup instructions in `ENVIRONMENT.md`.
-2. Work only in `student/`.
-3. Treat every existing remote object and identifier as retained infrastructure.
-4. Do not manually edit Terraform state JSON.
-5. Do not use broad `lifecycle.ignore_changes` rules to hide drift.
-6. Do not replace a required resource type with a different type, even when the resulting AWS object appears equivalent.
-7. Do not hardcode an ID, generated name, or intermediate output value.
-8. Before accepting any plan, inspect create, update, delete, and replace actions.
+1. 按照 `ENVIRONMENT.md` 中的说明初始化环境。
+2. 只能在 `student/` 中工作。
+3. 将所有已有远端对象和标识符视为必须保留的基础设施。
+4. 不得手动编辑 Terraform 状态 JSON。
+5. 不得使用宽泛的 `lifecycle.ignore_changes` 来掩盖漂移。
+6. 不得用其他资源类型替换要求的资源类型，即使最终 AWS 对象看起来等价。
+7. 不得硬编码 ID、生成的名称或中间输出值。
+8. 接受任何 plan 前，都必须检查创建、更新、删除和替换操作。
 
-## Required final directory layout
+## 最终目录结构
 
-Your final work under `student/` must use exactly these ownership roots and child-module directories:
+`student/` 下最终必须严格使用以下根模块和子模块目录：
 
 ```text
 student/
@@ -39,92 +39,92 @@ student/
     └── security/
 ```
 
-Each child-module directory must contain `main.tf`, `variables.tf`, and `outputs.tf`. Draft module files are supplied, but their interfaces are not guaranteed to satisfy this specification.
+每个子模块目录都必须包含 `main.tf`、`variables.tf` 和 `outputs.tf`。题目提供了模块草稿文件，但其接口不一定符合本实验要求。
 
-## Task 1 — Establish the baseline
+## 任务 1：建立基线
 
-Inspect the legacy root module in `student/`. Confirm that its state contains the existing VPC, two indexed subnets, three keyed security groups, keyed ingress rules, IAM resources, two keyed instances, two buckets, one retained object, and one generated naming resource.
+检查 `student/` 中的旧版根模块。确认其状态包含已有 VPC、两个带索引的子网、三个带 key 的安全组、带 key 的入站规则、IAM 资源、两个带 key 的实例、两个存储桶、一个需要保留的对象，以及一个用于生成名称的资源。
 
-Record the initial resource addresses and confirm that the initial plan reports **0 to add, 0 to change, and 0 to destroy**. The following physical identifiers must remain unchanged throughout the exercise:
+记录初始资源地址，并确认初始 plan 报告 **0 to add, 0 to change, and 0 to destroy**。以下物理标识符在整个实验中必须保持不变：
 
 - VPC ID
-- both subnet IDs
-- all security group IDs
-- both EC2 instance IDs
-- IAM role and instance profile names
-- artifact bucket name
-- retained object key
+- 两个子网 ID
+- 所有安全组 ID
+- 两个 EC2 实例 ID
+- IAM 角色名和实例配置文件名
+- artifact 存储桶名称
+- 保留对象的 key
 
-## Task 2 — Refactor into exact child-module boundaries
+## 任务 2：重构为指定的子模块边界
 
-The final child modules must meet every row in this table. Block counts refer to Terraform `resource` blocks, not instance counts.
+最终子模块必须满足下表的全部要求。表中的 block 数量指 Terraform `resource` block 数量，而不是实例数量。
 
-| Child module | Required file | Required resource type and block count | Required ownership |
+| 子模块 | 必需文件 | 必需资源类型及 block 数量 | 必需管理范围 |
 |---|---|---|---|
-| `modules/network` | `main.tf` | exactly 1 `aws_vpc` block and exactly 1 `aws_subnet` block | the existing VPC and both existing subnets; the subnet block must use `count` |
-| `modules/security` | `main.tf` | exactly 1 `aws_security_group` block and exactly 1 `aws_vpc_security_group_ingress_rule` block | all three groups and every existing ingress rule; both blocks must use `for_each` |
-| `modules/identity` | `main.tf` | exactly 1 `aws_iam_role` block and exactly 1 `aws_iam_instance_profile` block | the existing runtime role and profile |
-| `modules/compute` | `main.tf` | exactly 1 `aws_instance` block | both existing instances; the block must use `for_each` with the original stable string keys |
+| `modules/network` | `main.tf` | 恰好 1 个 `aws_vpc` block 和 1 个 `aws_subnet` block | 已有 VPC 和两个已有子网；子网 block 必须使用 `count` |
+| `modules/security` | `main.tf` | 恰好 1 个 `aws_security_group` block 和 1 个 `aws_vpc_security_group_ingress_rule` block | 三个已有安全组及所有已有入站规则；两个 block 都必须使用 `for_each` |
+| `modules/identity` | `main.tf` | 恰好 1 个 `aws_iam_role` block 和 1 个 `aws_iam_instance_profile` block | 已有运行时角色和配置文件 |
+| `modules/compute` | `main.tf` | 恰好 1 个 `aws_instance` block | 两个已有实例；block 必须使用原有稳定字符串 key 的 `for_each` |
 
-The four modules above are mandatory. Combining their responsibilities into fewer modules is non-compliant even when Terraform produces the correct infrastructure.
+以上四个模块都是必需的。即使 Terraform 生成了正确的基础设施，将多个模块的职责合并为更少的模块也不符合要求。
 
-Child modules must not read sibling-module internals. Cross-module values must be passed through a root module. Child modules must contain no provider blocks, no backend blocks, and no `terraform_remote_state` data source.
+子模块不得读取兄弟模块的内部实现。跨模块值必须经由根模块传递。子模块不得包含 provider block、backend block 或 `terraform_remote_state` 数据源。
 
-## Task 3 — Repair interfaces and dependency flow
+## 任务 3：修复接口与依赖关系
 
-Use these exact child-module output contracts:
+子模块必须使用以下精确的输出接口：
 
-| Module | Output name | Required type and meaning |
+| 模块 | 输出名称 | 必需类型及含义 |
 |---|---|---|
-| `network` | `vpc_id` | `string`, derived from the managed VPC |
-| `network` | `subnet_ids` | `map(string)`, keyed by the segment keys from the input definitions |
-| `security` | `security_group_ids` | `map(string)`, keyed by tier name |
-| `identity` | `role_name` | `string`, derived from the managed IAM role |
-| `identity` | `instance_profile_name` | `string`, derived from the managed instance profile |
-| `compute` | `instance_ids` | `map(string)`, keyed by workload role |
+| `network` | `vpc_id` | `string`，来自受管 VPC |
+| `network` | `subnet_ids` | `map(string)`，以输入定义中的 segment key 为 key |
+| `security` | `security_group_ids` | `map(string)`，以 tier 名称为 key |
+| `identity` | `role_name` | `string`，来自受管 IAM 角色 |
+| `identity` | `instance_profile_name` | `string`，来自受管实例配置文件 |
+| `compute` | `instance_ids` | `map(string)`，以 workload role 为 key |
 
-Required dependency flow:
+依赖关系必须如下：
 
-- `security` receives the VPC ID from the shared root.
-- `compute` receives subnet IDs as a map.
-- `compute` receives security group IDs as a map.
-- `compute` receives the instance profile name from `identity`.
-- `identity` receives the generated shared naming token through the application root.
-- No hardcoded ID or copied state value may substitute for one of these interfaces.
+- `security` 从 shared 根模块接收 VPC ID。
+- `compute` 接收子网 ID map。
+- `compute` 接收安全组 ID map。
+- `compute` 从 `identity` 接收实例配置文件名称。
+- `identity` 通过 application 根模块接收生成的 shared 命名 token。
+- 不得用硬编码 ID 或复制的状态值替代上述接口。
 
-Some supplied draft interfaces can be made to run by reshaping values in the root. That workaround is not accepted when it violates the exact input/output semantics above.
+部分草稿接口可以通过在根模块中重新组织值来运行，但如果这种做法违反了指定的输入/输出语义，则不予接受。
 
-## Task 4 — Preserve all resources while changing addresses
+## 任务 4：变更地址但保留所有资源
 
-Move every legacy state address to the address implied by the final ownership model. Your result must cover:
+将每个旧版状态地址迁移到最终归属模型所对应的地址。结果必须覆盖：
 
-- a normal singleton address,
-- indexed `count` addresses,
-- keyed `for_each` addresses,
-- addresses that move from the legacy root into a child module,
-- addresses that move into different final state files.
+- 普通单例地址；
+- 带索引的 `count` 地址；
+- 带 key 的 `for_each` 地址；
+- 从旧版根模块迁移到子模块的地址；
+- 迁移到不同最终状态文件的地址。
 
-The final state must contain no legacy managed-resource address from the original root module. A same-name destroy-and-recreate result is a failure. Re-uploading the retained S3 object is also a failure even when its content is unchanged.
+最终状态中不得保留原根模块的任何旧版受管资源地址。以同名资源先销毁再创建的结果视为失败。即使内容不变，重新上传保留的 S3 对象也视为失败。
 
-## Task 5 — Split ownership into two root modules
+## 任务 5：将资源归属拆分到两个根模块
 
-### Shared root
+### Shared 根模块
 
-`student/infra/shared` must call `network` and `security`. It also exclusively owns:
+`student/infra/shared` 必须调用 `network` 和 `security`，并且只能由它管理以下资源：
 
-- exactly 1 `random_pet` block,
-- exactly 2 `aws_s3_bucket` blocks,
-- exactly 1 `aws_s3_object` block.
+- 恰好 1 个 `random_pet` block；
+- 恰好 2 个 `aws_s3_bucket` block；
+- 恰好 1 个 `aws_s3_object` block。
 
-Its S3 backend key must be exactly:
+其 S3 后端 key 必须严格为：
 
 ```text
 tfpro-sim/lab-01/shared.tfstate
 ```
 
-The shared root must expose these exact root outputs:
+Shared 根模块必须暴露以下精确输出：
 
-| Output name | Required type |
+| 输出名称 | 必需类型 |
 |---|---|
 | `network_id` | `string` |
 | `subnet_ids_by_zone` | `map(string)` |
@@ -133,36 +133,36 @@ The shared root must expose these exact root outputs:
 | `artifact_bucket_name` | `string` |
 | `retained_object_key` | `string` |
 
-Every value must be derived from managed resources or child-module outputs. Hardcoded output values are non-compliant.
+每个值都必须来自受管资源或子模块输出。硬编码输出值不符合要求。
 
-### Application root
+### Application 根模块
 
-`student/infra/application` must call `identity` and `compute`. Its S3 backend key must be exactly:
+`student/infra/application` 必须调用 `identity` 和 `compute`。其 S3 后端 key 必须严格为：
 
 ```text
 tfpro-sim/lab-01/application.tfstate
 ```
 
-The application root must read the shared root through exactly 1 `terraform_remote_state` data block located in a root-module `.tf` file. No child module may read remote state.
+Application 根模块必须通过根模块 `.tf` 文件中的恰好 1 个 `terraform_remote_state` 数据 block 读取 shared 根模块。子模块不得读取远程状态。
 
-It must expose these exact root outputs:
+它必须暴露以下精确输出：
 
-| Output name | Required type |
+| 输出名称 | 必需类型 |
 |---|---|
 | `instance_ids_by_role` | `map(string)` |
 | `instance_profile_name` | `string` |
 
-## Provider identity and backend requirements
+## Provider 身份与后端要求
 
-Both roots must use only the default `hashicorp/aws` provider configuration declared in that root. All managed AWS resources, including resources inside child modules, must inherit that default provider identity. Provider aliases, child-module provider blocks, default host credentials, and credentials embedded directly in a managed resource are outside this lab's required implementation.
+两个根模块都只能使用各自根模块中声明的默认 `hashicorp/aws` provider 配置。所有受管 AWS 资源，包括子模块中的资源，都必须继承该默认 provider 身份。provider alias、子模块 provider block、默认主机凭据，以及直接写入受管资源的凭据，均不属于本实验要求的实现方式。
 
-For LocalStack, root provider configuration must use the emulator endpoint and the non-secret placeholder credentials documented in `ENVIRONMENT.md`. Both S3 backends must use the pre-existing bucket named `tfpro-lab01-state-archive`, path-style access, and their exact keys stated above. Keeping either final state local is non-compliant.
+对于 LocalStack，根模块 provider 配置必须使用模拟器 endpoint 和 `ENVIRONMENT.md` 中记录的非敏感占位凭据。两个 S3 后端都必须使用已有的 `tfpro-lab01-state-archive` 存储桶、path-style 访问，以及上文规定的精确 key。最终状态不得留在本地。
 
-## Final acceptance conditions
+## 最终验收条件
 
-1. Shared and application state contain only the resources assigned to their ownership boundaries.
-2. No resource ID listed in the baseline changes.
-3. The retained object is not deleted, replaced, or re-uploaded.
-4. Both final plans report 0 add, 0 change, 0 destroy.
-5. Required resource types, block counts, file locations, output names, output types, module boundaries, provider identity, and backend keys all match this document.
-6. No broad `ignore_changes`, hardcoded intermediate output, duplicate ownership, or child-level remote-state access remains.
+1. Shared 和 application 状态只包含各自归属范围内的资源。
+2. 基线中列出的资源 ID 均未发生变化。
+3. 保留对象没有被删除、替换或重新上传。
+4. 两个最终 plan 都报告 0 add、0 change、0 destroy。
+5. 资源类型、block 数量、文件位置、输出名称、输出类型、模块边界、provider 身份和后端 key 均符合本文档。
+6. 不存在宽泛的 `ignore_changes`、硬编码中间输出、重复归属或子模块远程状态访问。

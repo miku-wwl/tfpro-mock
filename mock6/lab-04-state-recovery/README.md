@@ -1,74 +1,57 @@
-# Terraform Professional Closed-Book Simulation — Lab 04
+# Terraform Professional 闭卷模拟练习：实验 04
 
-## State Recovery and Ownership Transfer
+## 状态恢复与资源归属迁移
 
-**Recommended time limit:** 45 minutes  
-**Mode:** Closed-book readiness assessment  
-**Environment:** Terraform CLI 1.11.x, Docker Desktop, Docker Compose, LocalStack
+**建议用时：**45 分钟
+**形式：**闭卷能力评估
+**环境：**Terraform CLI 1.11.x、Docker Desktop、Docker Compose、LocalStack
 
-This is an independently authored practice lab. It is not an official HashiCorp exam question.
+本实验为独立编写的练习内容，不代表 HashiCorp 官方考试题目。
 
-## Scenario
+## 场景
 
-A platform team interrupted a migration from a local Terraform state to an S3 backend. The underlying AWS-compatible resources still exist, but ownership is split between legacy state addresses, missing state records, and unmanaged remote objects. A partially revised configuration is present in `student/`.
+平台团队在将本地 Terraform 状态迁移到 S3 后端的过程中中断了操作。底层 AWS 兼容资源仍然存在，但归属分散在旧状态地址、缺失的状态记录和未纳入管理的远端对象之间。`student/` 中提供了一份部分修订过的配置。
 
-You must recover a single authoritative state without replacing established infrastructure. One retained object must leave Terraform management while remaining untouched remotely, and one new object must become managed.
+你必须在不替换已有基础设施的前提下恢复一份唯一权威状态。其中一个保留对象要退出 Terraform 管理，但远端对象必须保持不变；同时还要将一个新对象纳入管理。
 
-```mermaid
-flowchart LR
-    LS[Local legacy state] -->|recover records| TS[Target Terraform state]
-    EX[Existing LocalStack resources] -->|adopt without recreation| TS
-    TS -->|migrate| S3[(S3 backend)]
-    TS --> A[Assets bucket]
-    TS --> L[Logs bucket]
-    TS --> U[Three IAM users]
-    TS --> SG[Application security group]
-    TS --> R[Two ingress rules]
-    A --> B[base.txt managed]
-    A --> K[retained.txt unmanaged but preserved]
-    A --> N[new.txt managed]
-```
+## 实验边界
 
-## Exam boundary
+只能在 `student/` 中工作。不得修改 `bootstrap/` 或 `scripts/` 下的文件，也不得直接编辑任何 Terraform 状态 JSON。
 
-Work only in `student/`. Do not edit files under `bootstrap/` or `scripts/`. Do not edit any Terraform state JSON directly.
+开始前运行一次环境准备脚本：
 
-Run the environment preparation script once before starting:
+- Bash：`./scripts/setup.sh`
+- PowerShell：`./scripts/setup.ps1`
 
-- Bash: `./scripts/setup.sh`
-- PowerShell: `./scripts/setup.ps1`
+初始化过程会创建 `.lab/baseline.json`、`student/runtime.auto.tfvars.json`、`student/backend.hcl` 和可恢复的初始状态。基线用于证明资源身份，不是解决方案。
 
-The setup process creates `.lab/baseline.json`, `student/runtime.auto.tfvars.json`, `student/backend.hcl`, and the recoverable starting state. The baseline is evidence for resource identity; it is not a solution.
+## 初始状态
 
-## Starting condition
+实验开始时：
 
-At the beginning of the lab:
+- LocalStack 中有两个工作负载 S3 存储桶、一个 S3 后端存储桶、两个已有对象、三个 IAM 用户、一个安全组和两条入站规则；
+- `student/` 提供的本地状态只记录了其中一部分资源；
+- 多条记录使用旧地址；
+- 有一条过时状态记录没有对应配置；
+- 后端设置存在，但没有正确指向最终要求的位置；
+- 修订后的配置与已有资源存在漂移；
+- `retained.txt` 当前由 Terraform 管理。
 
-- LocalStack contains two S3 buckets used by the workload, one S3 backend bucket, two existing objects, three IAM users, one security group, and two ingress rules.
-- Only part of that estate is represented in the local state supplied to `student/`.
-- Several records use legacy addresses.
-- One obsolete state record has no corresponding configuration.
-- The backend settings are present but do not identify the required final backend location correctly.
-- The revised configuration contains drift from the established resources.
-- `retained.txt` is currently managed by Terraform.
+## 最终要求
 
-## Required final state
+### 任务 A：建立权威后端
 
-### Task A — Establish the authoritative backend
-
-The final state must be stored in the existing S3 backend bucket created by setup.
-
-The backend key must be exactly:
+最终状态必须存储在初始化脚本创建的已有 S3 后端存储桶中。后端 key 必须严格为：
 
 ```text
 tfpro-sim/lab-04/terraform.tfstate
 ```
 
-The local state records must be migrated without loss, duplication, or infrastructure recreation. The final working directory must no longer rely on local state as its authoritative state.
+本地状态记录必须在不丢失、不重复和不重建基础设施的情况下完成迁移。最终工作目录不得再依赖本地状态作为权威状态。
 
-### Task B — Recover ownership of existing infrastructure
+### 任务 B：恢复已有基础设施的归属
 
-The final state must contain these exact addresses:
+最终状态必须包含以下精确地址：
 
 ```text
 aws_s3_bucket.assets
@@ -81,41 +64,36 @@ aws_vpc_security_group_ingress_rule.client_https
 aws_vpc_security_group_ingress_rule.operations_https
 ```
 
-Both ingress rules must continue to represent distinct existing rules, even though they use the same protocol and port.
+两条入站规则虽然使用相同协议和端口，但必须继续分别代表两个不同的已有规则。
 
-### Task C — Eliminate legacy and stale ownership
+### 任务 C：消除旧的和过时的归属
 
-The final state must not contain:
+最终状态不得包含：三个原始独立 IAM 用户地址中的任何一个、`aws_s3_bucket.primary`、原始入站规则地址，或任何仅存在于状态中的过时记录。
 
-- any of the three original standalone IAM user addresses;
-- `aws_s3_bucket.primary`;
-- the original ingress-rule address;
-- any state-only obsolete record.
+同一个真实远端资源不能同时由两个状态地址管理。不得通过销毁并重新创建来修正地址。
 
-A real remote resource must never be managed simultaneously by two state addresses. Address correction must not be achieved through destroy-and-create replacement.
+### 任务 D：释放 `retained.txt`，但不得删除
 
-### Task D — Release `retained.txt` without deleting it
+完成时：
 
-At completion:
+- 没有 Terraform 资源 block 管理 `retained.txt`；
+- 没有状态地址表示 `retained.txt`；
+- 远端对象仍存在于 assets 存储桶中；
+- 内容仍精确为 `KEEP-ME`；
+- 基线中记录的身份和内容证据仍然有效。
 
-- no Terraform resource block manages `retained.txt`;
-- no state address represents `retained.txt`;
-- the remote object still exists in the assets bucket;
-- its content remains exactly `KEEP-ME`;
-- its recorded baseline identity and content evidence remain valid.
+### 任务 E：完成受管对象集合并生成报告
 
-### Task E — Complete the managed object set and reporting
-
-The assets bucket must contain a managed object with:
+Assets 存储桶必须包含：
 
 ```text
 key: new.txt
 content: Success
 ```
 
-`base.txt` must remain managed and retain content `BASE-CONTENT`.
+`base.txt` 必须继续受 Terraform 管理，内容保持为 `BASE-CONTENT`。
 
-Create and preserve these Terraform outputs:
+创建并保留以下 Terraform 输出：
 
 ```text
 bucket_names
@@ -125,7 +103,7 @@ security_group_rule_ids
 managed_object_keys
 ```
 
-The configuration must dynamically maintain:
+配置必须动态维护：
 
 ```text
 generated/s3.txt
@@ -133,32 +111,19 @@ generated/iam-users.txt
 generated/security.txt
 ```
 
-File requirements:
+文件要求：`s3.txt` 只包含两个工作负载存储桶名称，每行一个；`iam-users.txt` 只包含三个 IAM 用户名称，每行一个；`security.txt` 先写安全组 ID，再写两条入站规则 ID，每行一个。资源 ID 必须来自 Terraform 管理的值，不得硬编码，且排序必须具有确定性。
 
-- `s3.txt` contains exactly the two workload bucket names, one per line.
-- `iam-users.txt` contains exactly the three IAM user names, one per line.
-- `security.txt` contains the security group ID followed by the two ingress rule IDs, one value per line.
-- Resource IDs must come from Terraform-managed values, not hard-coded strings.
-- Ordering must be deterministic.
+## 完成标准
 
-## Completion standard
+所需变更应用完成后，最终 plan 必须报告 **0 to add, 0 to change, and 0 to destroy**。
 
-The final plan must report **0 to add, 0 to change, and 0 to destroy** after the required changes have been applied.
+以下做法均不允许：直接编辑状态 JSON；删除并重新创建已有存储桶、IAM 用户、安全组或任一已有入站规则；删除或重新创建 `retained.txt`；使用宽泛生命周期抑制规则掩盖漂移；为同一资源使用第二个状态地址；在输出或生成文件中硬编码远端资源 ID。
 
-The following are disallowed:
+`.lab/baseline.json` 中记录的关键资源身份和属性必须保持不变。恢复过程中唯一允许的远端基础设施变更是创建所需的 `new.txt` 对象；已有资源的配置漂移必须在不修改远端资源的情况下解决。
 
-- direct state JSON editing;
-- deleting and recreating established buckets, IAM users, the security group, or either existing ingress rule;
-- deleting or recreating `retained.txt`;
-- broad lifecycle suppression that hides unresolved drift;
-- using a second state address for a resource already represented elsewhere;
-- hard-coded remote resource IDs in outputs or generated files.
+## 重启实验
 
-Critical resource identities and recorded attributes in `.lab/baseline.json` must be preserved. The only permitted remote infrastructure mutation is creation of the required `new.txt` object; configuration drift on established resources must be resolved without changing those remote resources.
+- 在不重建 LocalStack 容器的情况下恢复初始状态：`./scripts/corrupt-state.sh` 或 `./scripts/corrupt-state.ps1`；
+- 重新创建整个隔离的 LocalStack 环境：`./scripts/reset.sh` 或 `./scripts/reset.ps1`。
 
-## Restarting the lab
-
-- Restore the prepared starting condition without rebuilding the LocalStack container: `./scripts/corrupt-state.sh` or `./scripts/corrupt-state.ps1`.
-- Recreate the entire isolated LocalStack environment: `./scripts/reset.sh` or `./scripts/reset.ps1`.
-
-Both reset paths are destructive only to this lab's local container data and generated working files.
+两种重置方式只会破坏本实验的本地容器数据和生成的工作文件。
