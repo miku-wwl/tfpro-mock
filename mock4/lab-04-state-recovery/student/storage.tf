@@ -25,5 +25,5 @@ resource "aws_s3_object" "base" {
 resource "aws_s3_object" "new" {
   bucket  = aws_s3_bucket.assets.id
   key     = "new.txt"
-  content = "TODO"
+  content = "Success"
 }
