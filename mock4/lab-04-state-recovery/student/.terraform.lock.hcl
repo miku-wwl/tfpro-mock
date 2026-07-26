@@ -16,10 +16,3 @@ provider "registry.terraform.io/hashicorp/local" {
     "h1:px3Hpv/tL288wzu5knHywTTBcrydLnnGEiF/NIQBaRs=",
   ]
 }
-
-provider "registry.terraform.io/hashicorp/random" {
-  version = "3.9.0"
-  hashes = [
-    "h1:q/uaUTBdKgAmZESrwsoeDQff9uUA/cI/N5ZKNgVwa9c=",
-  ]
-}
