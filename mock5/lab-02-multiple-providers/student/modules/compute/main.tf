@@ -19,6 +19,6 @@ resource "aws_autoscaling_group" "capacity_pool" {
   }
 
   lifecycle {
-    ignore_changes = all
+    ignore_changes = [desired_capacity]
   }
 }
