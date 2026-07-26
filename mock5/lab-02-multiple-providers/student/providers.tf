@@ -2,8 +2,8 @@
 provider "aws" {
   region = "us-east-1"
 
-  shared_config_files      = ["${path.root}/.aws-config/config"]
-  shared_credentials_files = ["${path.root}/.aws/credentials.localstack"]
+  shared_config_files      = ["${path.root}/.aws/config"]
+  shared_credentials_files = ["${path.root}/.aws/credentials"]
 
   skip_credentials_validation = true
   skip_metadata_api_check     = true
@@ -22,10 +22,10 @@ provider "aws" {
 provider "aws" {
   alias   = "compute"
   region  = "us-east-1"
-  profile = "compute-runner"
+  profile = "compute-operator"
 
-  shared_config_files      = ["${path.root}/.aws-config/config"]
-  shared_credentials_files = ["${path.root}/.aws/credentials.localstack"]
+  shared_config_files      = ["${path.root}/.aws/config"]
+  shared_credentials_files = ["${path.root}/.aws/credentials"]
 
   skip_credentials_validation = true
   skip_metadata_api_check     = true
@@ -46,8 +46,8 @@ provider "aws" {
   region  = "us-east-1"
   profile = "identity-operator"
 
-  shared_config_files      = ["${path.root}/.aws-config/config"]
-  shared_credentials_files = ["${path.root}/.aws/credentials.localstack"]
+  shared_config_files      = ["${path.root}/.aws/config"]
+  shared_credentials_files = ["${path.root}/.aws/credentials"]
 
   skip_credentials_validation = true
   skip_metadata_api_check     = true
