@@ -145,7 +145,7 @@ variable "workload_roles" {
 variable "base_ami" {
   type        = string
   description = "Stable emulator AMI identifier."
-  default     = "ami-0abc1234def567890"
+  default     = "ami-327e5696"
 }
 
 variable "artifact_object_key" {
