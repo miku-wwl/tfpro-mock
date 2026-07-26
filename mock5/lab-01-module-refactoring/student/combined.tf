@@ -42,14 +42,19 @@ resource "aws_security_group" "tier" {
 resource "aws_vpc_security_group_ingress_rule" "path" {
   for_each = var.ingress_rules
 
-  security_group_id            = aws_security_group.tier[each.value.target_tier].id
-  cidr_ipv4                    = try(each.value.source_cidr, null)
-  referenced_security_group_id = try(aws_security_group.tier[each.value.source_tier].id, null)
-  from_port                    = each.value.port
-  to_port                      = each.value.port
-  ip_protocol                  = each.value.protocol
-  description                  = each.value.description
+  security_group_id = aws_security_group.tier[each.value.target_tier].id
+  cidr_ipv4         = try(each.value.source_cidr, null)
+  referenced_security_group_id = try(
+    "${data.aws_caller_identity.current.account_id}/${aws_security_group.tier[each.value.source_tier].id}",
+    null
+  )
+  from_port   = each.value.port
+  to_port     = each.value.port
+  ip_protocol = each.value.protocol
+  description = each.value.description
 }
+
+data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "runtime_assume" {
   statement {
