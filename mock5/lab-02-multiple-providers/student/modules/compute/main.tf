@@ -1,6 +1,6 @@
 resource "aws_launch_template" "node_template" {
   name_prefix   = "lab02-capacity-template-"
-  image_id      = "ami-00000000000000000"
+  image_id      = "ami-327e5696"
   instance_type = "t3.nano"
 }
 
