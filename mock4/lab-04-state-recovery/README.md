@@ -1,103 +1,103 @@
-# Lab 04 — State Recovery and Stable Data Normalization
+# 实验 04：状态恢复与稳定的数据规范化
 
-> Independent Terraform Professional practice simulation. This is not an official exam item.
+> 独立的 Terraform Professional 练习模拟题，不代表官方考试题目。
 
-**Target time:** 45–55 minutes  
-**Target difficulty:** 90–94 / 100  
-**Environment:** Terraform CLI 1.11.x, Docker Desktop, Docker Compose, LocalStack, AWS CLI, Bash or PowerShell
+**建议用时：**45–55 分钟  
+**难度：**90–94 / 100  
+**环境：**Terraform CLI 1.11.x、Docker Desktop、Docker Compose、LocalStack、AWS CLI，以及 Bash 或 PowerShell
 
-## Scenario
+## 场景
 
-A partially managed LocalStack environment was handed to you after an interrupted migration. Some resources are recorded under legacy state addresses, some exist remotely but are absent from state, one state address is orphaned, the S3 backend configuration is wrong, and the configuration disagrees with the remote objects.
+一次中断的迁移完成后，你接手了一个部分由 Terraform 管理的 LocalStack 环境。部分资源仍使用旧的状态地址记录；部分资源已经存在于远端，但尚未纳入状态；有一个状态地址已成为孤儿地址；S3 后端配置错误；当前配置也与远端对象不一致。
 
-The recovery inventory is split across CSV, JSON, and YAML. Their raw value types intentionally differ. You must normalize them into one stable model before using them for `for_each` and import decisions.
+恢复清单分散在 CSV、JSON 和 YAML 三种文件中，而且原始值类型刻意设置得不一致。你必须先将它们规范化为统一、稳定的数据模型，然后再用这些数据驱动 `for_each` 和资源导入决策。
 
-Do not recreate existing infrastructure. Do not directly edit state JSON.
+不要重新创建已有基础设施，也不要直接编辑状态 JSON 文件。
 
-## Start
+## 开始实验
 
-From the lab root:
+在实验根目录执行：
 
 ```bash
 ./scripts/setup.sh
 ```
 
-PowerShell:
+PowerShell：
 
 ```powershell
 ./scripts/setup.ps1
 ```
 
-The setup creates LocalStack resources, saves `baseline/baseline.json`, and prepares a damaged local state in `student/`.
+初始化脚本会创建 LocalStack 资源，保存 `baseline/baseline.json`，并在 `student/` 中准备一份受损的本地状态。
 
-## Starting conditions
+## 初始状态
 
-Expect all of the following:
+你应当会遇到以下情况：
 
-- The local state contains only part of the real environment.
-- The backend key, region, and S3 endpoint are wrong.
-- The assets bucket is recorded as `aws_s3_bucket.primary`.
-- IAM users are recorded as `aws_iam_user.alpha`, `aws_iam_user.beta`, and `aws_iam_user.gamma`.
-- The logs bucket and application security group exist remotely but are not in state. One ingress rule is recorded under a legacy address; the other is remote-only.
-- `aws_s3_object.retained` is managed and must be released without deleting the remote object.
-- `aws_s3_object.retired_probe` is an orphaned state address.
-- The target assets bucket configuration would replace the existing bucket if applied unchanged.
-- Tags and provider settings do not match the baseline.
-- The recovery inventory contains duplicate logical records and mixed raw types.
+- 本地状态只包含真实环境的一部分资源。
+- 后端 key、区域和 S3 endpoint 均配置错误。
+- assets 存储桶记录为 `aws_s3_bucket.primary`。
+- IAM 用户记录为 `aws_iam_user.alpha`、`aws_iam_user.beta` 和 `aws_iam_user.gamma`。
+- logs 存储桶和应用安全组已存在于远端，但不在状态中。有一条入站规则使用旧地址记录，另一条规则仅存在于远端。
+- `aws_s3_object.retained` 当前由 Terraform 管理，但必须在不删除远端对象的情况下解除管理。
+- `aws_s3_object.retired_probe` 是一个孤儿状态地址。
+- 如果直接应用当前的 assets 存储桶配置，Terraform 会尝试替换已有存储桶。
+- 标签和 provider 设置与基线不一致。
+- 恢复清单中包含重复的逻辑记录，并且原始值类型不统一。
 
-## Task 1 — Repair and migrate the backend
+## 任务 1：修复并迁移后端
 
-The final backend must be S3 and must use this exact key:
+最终后端必须使用 S3，并且必须使用以下精确的 key：
 
 ```text
 tfpro-sim/lab-04/terraform.tfstate
 ```
 
-Requirements:
+要求：
 
-- Use the backend bucket recorded in `student/baseline/backend.hcl`.
-- Correct the region and LocalStack S3 endpoint.
-- Migrate the current local state without losing records.
-- Do not create duplicate resources.
-- Do not continue using local state after migration.
+- 使用 `student/baseline/backend.hcl` 中记录的后端存储桶。
+- 修正区域和 LocalStack S3 endpoint。
+- 迁移当前本地状态，确保不丢失任何记录。
+- 不得创建重复资源。
+- 迁移完成后不得继续使用本地状态。
 
-## Task 2 — Normalize the recovery inventory
+## 任务 2：规范化恢复清单
 
-Read all three files under `student/data/`:
+读取 `student/data/` 下的三个文件：
 
 - `recovery.csv`
 - `recovery.json`
 - `recovery.yaml`
 
-Normalize every enabled record to one object shape with these semantic fields:
+将所有启用的记录规范化为统一对象结构，并包含以下语义字段：
 
 - `kind`
 - `address_key`
-- nullable `remote_suffix`
-- boolean `enabled`
-- number `priority`
-- boolean `keep_remote`
+- 可为空的 `remote_suffix`
+- 布尔值 `enabled`
+- 数值 `priority`
+- 布尔值 `keep_remote`
 - `description`
-- source format
+- 源格式
 
-Rules:
+规则：
 
-- CSV empty strings and JSON/YAML `null` must normalize consistently.
-- A real `null` must not be silently changed to an empty string in the canonical object.
-- Resolve duplicate logical identities deterministically. Higher priority wins; ties must also be deterministic.
-- Do not use input row numbers as permanent keys.
-- Input order changes must not alter resource addresses.
-- Use appropriate collection functions such as `flatten`, `merge`, `distinct`/`toset`, `lookup`, or equivalent.
+- CSV 中的空字符串，以及 JSON/YAML 中的 `null`，必须以一致的方式规范化。
+- 真实的 `null` 不能在规范化对象中被无声地转换为空字符串。
+- 必须以确定性的方式解决重复逻辑身份：优先级较高的记录胜出；优先级相同也必须能够确定性地决出结果。
+- 不得使用输入行号作为永久 key。
+- 即使输入顺序发生变化，资源地址也不能改变。
+- 使用合适的集合函数，例如 `flatten`、`merge`、`distinct`/`toset`、`lookup` 或等效方法。
 
-### Expression traps
+### 表达式陷阱
 
-A direct object comprehension keyed only by `kind:address_key` will hit a **duplicate object key** error because the inputs contain duplicate logical records.
+如果只使用 `kind:address_key` 作为对象推导式的 key，会因为输入中存在重复逻辑记录而触发 **duplicate object key** 错误。
 
-A conditional such as “enabled record returns an object, disabled record returns a list” will hit a **conditional branches type mismatch**. Keep both branches type-compatible or filter with the `if` clause of a comprehension.
+如果条件表达式中“启用记录返回对象、禁用记录返回列表”，会触发 **conditional branches type mismatch**。应确保两个分支的类型兼容，或使用对象推导式的 `if` 子句进行过滤。
 
-## Task 3 — Adopt existing resources
+## 任务 3：接管已有资源
 
-The final state must contain:
+最终状态必须包含以下地址：
 
 ```text
 aws_s3_bucket.assets
@@ -110,49 +110,49 @@ aws_vpc_security_group_ingress_rule.inbound["ops-tcp-8443"]
 aws_vpc_security_group_ingress_rule.inbound["audit-tcp-9443"]
 ```
 
-Requirements:
+要求：
 
-- Drive the ingress-rule import targets from a normalized map.
-- Correctly distinguish a Terraform resource address from a remote import ID.
-- Quote `for_each` string keys correctly in state commands.
-- After import, continue repairing configuration until the plan no longer proposes changes to adopted resources.
-- Do not reveal or guess IDs; use `baseline/baseline.json` and state inspection.
+- 使用规范化后的 map 驱动入站规则的导入目标。
+- 正确区分 Terraform 资源地址和远端导入 ID。
+- 在状态命令中正确引用 `for_each` 的字符串 key。
+- 导入后继续修复配置，直到 plan 不再对已接管资源提出任何变更。
+- 不要泄露或猜测 ID；应使用 `baseline/baseline.json` 和状态检查结果。
 
-## Task 4 — Migrate legacy addresses
+## 任务 4：迁移旧地址
 
-Final requirements:
+最终要求：
 
-- `aws_s3_bucket.primary` is absent.
-- `aws_iam_user.alpha`, `aws_iam_user.beta`, and `aws_iam_user.gamma` are absent.
-- `aws_s3_object.retired_probe` is absent.
-- `aws_vpc_security_group_ingress_rule.legacy_ops` is absent.
-- No real resource is managed by two addresses.
-- Address migration must not use destroy/create replacement.
+- `aws_s3_bucket.primary` 不得存在。
+- `aws_iam_user.alpha`、`aws_iam_user.beta` 和 `aws_iam_user.gamma` 不得存在。
+- `aws_s3_object.retired_probe` 不得存在。
+- `aws_vpc_security_group_ingress_rule.legacy_ops` 不得存在。
+- 任何真实资源都不能同时由两个地址管理。
+- 地址迁移不得导致销毁/创建替换。
 
-## Task 5 — Release `retained.txt`
+## 任务 5：释放 `retained.txt`
 
-Final requirements:
+最终要求：
 
-- The `retained.txt` resource block is absent from configuration.
-- Its state address is absent.
-- The remote object still exists.
-- Its content remains exactly `KEEP-ME`.
-- It is not deleted or recreated.
+- 配置中不得存在 `retained.txt` 对应的资源块。
+- 状态中不得存在该资源地址。
+- 远端对象必须继续存在。
+- 对象内容必须保持精确的 `KEEP-ME`。
+- 不得删除或重新创建该对象。
 
-Removing only the resource block is unsafe because Terraform would plan deletion while the state entry remains.
+仅移除资源块是不安全的，因为状态条目仍然存在时，Terraform 会计划删除远端对象。
 
-## Task 6 — Create `new.txt`
+## 任务 6：创建 `new.txt`
 
-Create a managed S3 object:
+创建一个由 Terraform 管理的 S3 对象：
 
-- key: `new.txt`
-- content: `Success`
+- key：`new.txt`
+- 内容：`Success`
 
-Keep `base.txt` managed and unchanged.
+保持 `base.txt` 由 Terraform 管理，且内容不变。
 
-## Task 7 — Outputs and generated files
+## 任务 7：输出与生成文件
 
-Create these outputs:
+创建以下 outputs：
 
 - `bucket_names`
 - `iam_user_names`
@@ -160,36 +160,36 @@ Create these outputs:
 - `security_group_rule_ids`
 - `managed_object_keys`
 
-Create these files dynamically with Terraform:
+使用 Terraform 动态创建以下文件：
 
-- `generated/s3.txt` — both bucket names
-- `generated/iam-users.txt` — all three IAM user names
-- `generated/security.txt` — security group ID and both rule IDs
+- `generated/s3.txt`：两个存储桶名称
+- `generated/iam-users.txt`：三个 IAM 用户名称
+- `generated/security.txt`：安全组 ID 和两条规则的 ID
 
-Requirements:
+要求：
 
-- Do not hardcode resource IDs.
-- Generated line order must be stable.
-- Set/list iteration order must not leak into file content.
+- 不得硬编码资源 ID。
+- 生成文件中的行顺序必须稳定。
+- set/list 的迭代顺序不能影响文件内容。
 
-## Task 8 — Final proof
+## 任务 8：最终验证
 
-Produce and inspect a saved plan.
+生成并检查保存的 plan。
 
-The final result must be:
+最终结果必须为：
 
 ```text
 0 to add, 0 to change, 0 to destroy
 ```
 
-Then run the supplied shuffle test from the solution workflow or implement the equivalent test. Reordering CSV, JSON, and YAML inputs must not cause delete/create actions or resource-address churn.
+然后运行 solution workflow 中提供的 shuffle 测试，或实现等效测试。对 CSV、JSON 和 YAML 输入重新排序后，不得产生删除/创建操作，也不得导致资源地址发生变化。
 
-## Prohibited shortcuts
+## 禁止使用的捷径
 
-- Direct edits to `terraform.tfstate` or remote state JSON
-- Recreating existing buckets, users, security groups, or rules
-- Broad `ignore_changes`
-- Row-index-based `for_each` keys
-- Hardcoded LocalStack-generated IDs
-- Importing `retained.txt` again after releasing it
-- Applying a plan that contains unexpected delete or replace actions
+- 直接编辑 `terraform.tfstate` 或远端状态 JSON
+- 重新创建已有的存储桶、用户、安全组或规则
+- 使用宽泛的 `ignore_changes`
+- 使用基于行号的 `for_each` key
+- 硬编码 LocalStack 生成的 ID
+- 释放 `retained.txt` 后再次导入它
+- 应用包含意外删除或替换操作的 plan
