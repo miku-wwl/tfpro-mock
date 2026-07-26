@@ -1,6 +1,7 @@
-# Starter trap: the default provider can work with ambient credentials but is not allowed.
 provider "aws" {
-  region = "us-east-1"
+  alias   = "compute"
+  region  = "us-east-1"
+  profile = "compute-operator"
 
   shared_config_files      = ["${path.root}/.aws/config"]
   shared_credentials_files = ["${path.root}/.aws/credentials"]
@@ -20,9 +21,9 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias   = "compute"
+  alias   = "readonly"
   region  = "us-east-1"
-  profile = "compute-operator"
+  profile = "readonly-auditor"
 
   shared_config_files      = ["${path.root}/.aws/config"]
   shared_credentials_files = ["${path.root}/.aws/credentials"]

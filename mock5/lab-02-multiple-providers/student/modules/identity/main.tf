@@ -1,3 +1,4 @@
 resource "aws_iam_user" "audit_subject" {
-  name = "lab02-evidence-user"
+  provider = aws.identity
+  name     = "lab02-evidence-user"
 }
