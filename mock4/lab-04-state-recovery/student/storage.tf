@@ -1,18 +1,17 @@
 resource "aws_s3_bucket" "assets" {
-  # Wrong on purpose: applying this unchanged would replace the existing bucket.
-  bucket = "${var.lab_prefix}-vault-assets-v2"
+  bucket = local.baseline.buckets.assets
 
   tags = {
-    Name        = "${var.lab_prefix}-vault-assets-v2"
+    Name        = local.baseline.buckets.assets
     Environment = "exam"
   }
 }
 
 resource "aws_s3_bucket" "logs" {
-  bucket = "${var.lab_prefix}-vault-logs"
+  bucket = local.baseline.buckets.logs
 
   tags = {
-    Name        = "${var.lab_prefix}-vault-logs"
+    Name        = local.baseline.buckets.logs
     Environment = "exam"
   }
 }

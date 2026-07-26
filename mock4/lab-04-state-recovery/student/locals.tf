@@ -75,45 +75,37 @@ locals {
   # The false filters preserve useful static element types while keeping the
   # later task-specific maps out of this normalization task.
   iam_members = {
-    for key, value in {
-      placeholder = {
-        name        = ""
-        description = ""
-      }
-    } : key => value if false
+    for identity, item in local.canonical_inventory : item.address_key => {
+      name        = local.baseline.iam_users[item.address_key]
+      description = item.description
+    } if item.kind == "iam_user"
   }
 
   active_rule_specs = {
-    for key, value in {
-      placeholder = {
-        description = ""
-        from_port   = 0
-        to_port     = 0
-        ip_protocol = "tcp"
-        cidr_ipv4   = "127.0.0.1/32"
-      }
-    } : key => value if false
+    for identity, item in local.canonical_inventory : item.address_key => merge(
+      {
+        "ops-tcp-8443" = {
+          from_port   = 8443
+          to_port     = 8443
+          ip_protocol = "tcp"
+          cidr_ipv4   = "10.64.10.0/24"
+        }
+        "audit-tcp-9443" = {
+          from_port   = 9443
+          to_port     = 9443
+          ip_protocol = "tcp"
+          cidr_ipv4   = "10.64.20.0/24"
+        }
+      }[item.address_key],
+      { description = item.description }
+    ) if item.kind == "security_group_rule"
   }
 
   rule_import_targets = {
-    for key, value in { placeholder = "sgr-placeholder" } :
-    key => value if false
+    for identity, item in local.canonical_inventory : item.address_key =>
+    local.baseline.security_group.rule_ids[item.address_key]
+    if item.kind == "security_group_rule"
   }
 
-  security_rule_specs = {
-    "ops-tcp-8443" = {
-      description = "Operations access"
-      from_port   = 8443
-      to_port     = 8443
-      ip_protocol = "tcp"
-      cidr_ipv4   = "10.44.0.0/16"
-    }
-    "audit-tcp-9443" = {
-      description = "Audit access"
-      from_port   = 9443
-      to_port     = 9443
-      ip_protocol = "tcp"
-      cidr_ipv4   = "10.55.0.0/16"
-    }
-  }
+  security_rule_specs = local.active_rule_specs
 }
