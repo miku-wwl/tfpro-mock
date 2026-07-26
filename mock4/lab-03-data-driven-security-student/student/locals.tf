@@ -1,10 +1,10 @@
 locals {
   selected_rules = (
     var.rules_format == "csv"
-    ? csvdecode(file("${path.module}/data/rules.csv"))
+    ? jsondecode(jsonencode(csvdecode(file("${path.module}/data/rules.csv"))))
     : var.rules_format == "json"
-    ? jsondecode(file("${path.module}/data/rules.json"))
-    : yamldecode(file("${path.module}/data/rules.yaml"))
+    ? jsondecode(jsonencode(jsondecode(file("${path.module}/data/rules.json"))))
+    : jsondecode(jsonencode(yamldecode(file("${path.module}/data/rules.yaml"))))
   )
 
   normalized_rules = [
@@ -15,7 +15,7 @@ locals {
       from_port       = try(tonumber(rule.from_port), null)
       to_port         = try(tonumber(rule.to_port), null)
       protocol        = lower(rule.protocol)
-      source_selector = coalesce(rule.source_selector, "") == "" ? null : rule.source_selector
+      source_selector = try(rule.source_selector == "" ? null : rule.source_selector, null)
       description     = rule.description
       enabled         = tobool(rule.enabled)
     }
