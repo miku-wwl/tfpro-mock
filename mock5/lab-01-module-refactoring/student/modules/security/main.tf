@@ -3,7 +3,7 @@ resource "aws_security_group" "tier" {
 
   name        = "${var.name_stem}-${each.key}"
   description = each.value.description
-  vpc_id      = var.vpc_id[0]
+  vpc_id      = var.vpc_id
   tags = {
     Name = "${var.name_stem}-${each.key}"
     Tier = each.key

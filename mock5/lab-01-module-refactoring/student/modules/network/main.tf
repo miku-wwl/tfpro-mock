@@ -2,7 +2,7 @@ resource "aws_vpc" "platform" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = { Name = "${var.name_stem}-vpc" }
+  tags                 = { Name = "${var.name_stem}-vpc" }
 }
 
 resource "aws_subnet" "segment" {

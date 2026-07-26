@@ -1,7 +1,6 @@
 variable "name_stem" { type = string }
 
-# Draft defect: wrapping a single VPC ID in a list can be made functional but violates the contract.
-variable "vpc_id" { type = list(string) }
+variable "vpc_id" { type = string }
 
 variable "security_tiers" {
   type = map(object({ description = string }))

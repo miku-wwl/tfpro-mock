@@ -1,3 +1,5 @@
 output "security_group_ids" {
-  value = values(aws_security_group.tier)[*].id
+  value = {
+    for key, group in aws_security_group.tier : key => group.id
+  }
 }
