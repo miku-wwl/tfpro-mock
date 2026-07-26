@@ -16,14 +16,14 @@ output "security_group_id" {
 }
 
 output "security_group_rule_ids" {
-  value = {
+  value = [
     for key in sort(keys(aws_vpc_security_group_ingress_rule.inbound)) :
-    key => aws_vpc_security_group_ingress_rule.inbound[key].id
-  }
+    aws_vpc_security_group_ingress_rule.inbound[key].id
+  ]
 }
 
 output "managed_object_keys" {
-  value = sort([
+  value = toset([
     aws_s3_object.base.key,
     aws_s3_object.new.key,
   ])
