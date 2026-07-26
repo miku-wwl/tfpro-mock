@@ -22,20 +22,58 @@ locals {
     local.yaml_rows,
   ])
 
-  # TODO: Normalize mixed string/number/bool/null/empty-string values.
-  # Preserve semantic null for remote_suffix instead of coercing it to "".
-  normalized_inventory = []
+  normalized_inventory = [
+    for item in local.raw_inventory : {
+      kind          = tostring(item.kind)
+      address_key   = tostring(item.address_key)
+      remote_suffix = try(item.remote_suffix, null) == null || try(item.remote_suffix, "") == "" ? null : tostring(item.remote_suffix)
+      enabled       = item.enabled == null ? false : try(tobool(item.enabled), false)
+      priority      = item.priority == null || try(item.priority, "") == "" ? 0 : tonumber(item.priority)
+      keep_remote   = item.keep_remote == null || try(item.keep_remote, "") == "" ? false : try(tobool(item.keep_remote), false)
+      description   = tostring(item.description)
+      source_format = tostring(item.source_format)
+    }
+  ]
+
+  enabled_inventory = [
+    for item in local.normalized_inventory : item if item.enabled
+  ]
+
+  distinct_enabled_inventory = distinct(local.enabled_inventory)
+
+  inventory_by_identity = {
+    for identity in distinct([
+      for item in local.distinct_enabled_inventory : "${item.kind}:${item.address_key}"
+      ]) : identity => [
+      for item in local.distinct_enabled_inventory : item
+      if "${item.kind}:${item.address_key}" == identity
+    ]
+  }
+
+  ranked_inventory = {
+    for identity, items in local.inventory_by_identity : identity => {
+      for item in items : format(
+        "%010d|%s|%s|%s",
+        999999 - item.priority,
+        item.source_format,
+        item.description,
+        sha1(jsonencode(item))
+      ) => item
+    }
+  }
 
   # TRAP: a direct { for item in ... : "${item.kind}:${item.address_key}" => item }
   # fails because logical duplicates exist.
   #
   # TRAP: item.enabled ? { (item.address_key) = item } : []
   # fails because the conditional branches have object and tuple types.
-  canonical_inventory = {}
+  canonical_inventory = {
+    for identity, ranked in local.ranked_inventory : identity => ranked[sort(keys(ranked))[0]]
+  }
 
-  # TODO: Build stable maps from canonical_inventory. Never key by row index.
+  # Build stable maps from canonical_inventory. Never key by row index.
   # The false filters preserve useful static element types while keeping the
-  # starter maps empty and validation-friendly.
+  # later task-specific maps out of this normalization task.
   iam_members = {
     for key, value in {
       placeholder = {
