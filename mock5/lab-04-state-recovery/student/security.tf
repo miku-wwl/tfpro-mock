@@ -1,12 +1,8 @@
 resource "aws_security_group" "application" {
   name        = var.security_group_name
-  description = "candidate application security group"
+  description = "lab4 application"
   vpc_id      = var.vpc_id
 
-  tags = {
-    Lab  = "lab-04-state-recovery"
-    Role = "app"
-  }
 }
 
 locals {
