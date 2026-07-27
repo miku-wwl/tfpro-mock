@@ -4,6 +4,8 @@ locals {
   security_roles = toset(["edge", "ledger", "control"])
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_vpc" "substrate" {
   filter {
     name   = "tag:LabSuite"

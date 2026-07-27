@@ -53,7 +53,7 @@ resource "aws_vpc_security_group_ingress_rule" "policy" {
 
   security_group_id            = local.security_group_ids[each.value.destination]
   cidr_ipv4                    = each.value.source == "-" ? data.aws_subnet.network[each.value.source_selector].cidr_block : null
-  referenced_security_group_id = each.value.source == "-" ? null : local.security_group_ids[each.value.source]
+  referenced_security_group_id = each.value.source == "-" ? null : format("%s/%s", data.aws_caller_identity.current.account_id, local.security_group_ids[each.value.source])
 
   from_port   = each.value.protocol == "-1" ? null : each.value.from_port
   to_port     = each.value.protocol == "-1" ? null : each.value.to_port
