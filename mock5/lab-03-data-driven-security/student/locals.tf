@@ -29,11 +29,6 @@ locals {
     if rule.direction == "ingress" && rule.enabled
   ]
 
-  rules_by_destination_port = {
-    for rule in local.normalized_rules :
-    "${rule.destination}:${rule.from_port}" => rule
-  }
-
   rules_by_key = {
     for rule in local.ingress_rules : jsonencode({
       source          = rule.source
