@@ -3,26 +3,27 @@ output "normalized_rules" {
 }
 
 output "ingress_rule_keys" {
-  value = keys(local.destination_port_map)
+  value = keys(local.rule_instances)
 }
 
 output "rules_by_destination" {
   value = {
     for row in local.normalized_rules :
-    row.destination => row
+    row.destination => row...
+    if row.direction == "ingress" && row.enabled
   }
 }
 
 output "rules_count_by_protocol" {
   value = {
-    for protocol in distinct([for row in local.normalized_rules : row.protocol]) :
-    protocol => length([for row in local.normalized_rules : row if row.protocol == protocol])
+    for protocol in distinct([for row in local.rule_instances : row.protocol]) :
+    protocol => length([for row in local.rule_instances : row if row.protocol == protocol])
   }
 }
 
 output "source_types" {
   value = toset([
-    for row in local.normalized_rules :
+    for row in local.rule_instances :
     row.source == "-" ? "subnet" : "security-group"
   ])
 }
