@@ -38,7 +38,7 @@ resource "aws_s3_object" "base" {
 resource "aws_s3_object" "delivery_receipt" {
   bucket       = aws_s3_bucket.assets.id
   key          = "new.txt"
-  content      = "Pending"
+  content      = "Success"
   content_type = "text/plain"
-  etag         = md5("Pending")
+  etag         = md5("Success")
 }
