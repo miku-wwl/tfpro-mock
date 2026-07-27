@@ -18,18 +18,18 @@ locals {
       direction       = lower(trimspace(tostring(row.direction)))
       source          = trimspace(tostring(row.source))
       destination     = trimspace(tostring(lookup(row, "destination", "")))
-      from_port       = row.from_port
-      to_port         = row.to_port
+      from_port       = try(tonumber(row.from_port), null)
+      to_port         = try(tonumber(row.to_port), null)
       protocol        = lower(trimspace(tostring(row.protocol)))
       source_selector = trimspace(tostring(row.source_selector))
       description     = trimspace(tostring(row.description))
-      enabled         = row.enabled
+      enabled         = try(tobool(row.enabled), lower(trimspace(tostring(row.enabled))) == "true")
     }
   ]
 
   destination_port_map = {
     for row in local.normalized_rules :
-    "${row.source}|${row.destination}|${row.protocol}|${row.from_port}|${row.to_port}" => row
+    "${row.source}|${row.destination}|${row.protocol}|${row.from_port == null ? "" : tostring(row.from_port)}|${row.to_port == null ? "" : tostring(row.to_port)}" => row
     if row.direction == "ingress" && lower(row.enabled) == "true"
   }
 
