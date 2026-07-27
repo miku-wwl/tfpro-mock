@@ -33,6 +33,6 @@ resource "aws_autoscaling_group" "pool" {
   }
 
   lifecycle {
-    ignore_changes = [max_size]
+    ignore_changes = [desired_capacity]
   }
 }
