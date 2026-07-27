@@ -32,10 +32,3 @@ resource "aws_s3_object" "retained" {
   etag         = md5("KEEP-ME")
 }
 
-resource "aws_s3_object" "retired_marker" {
-  bucket       = var.assets_bucket_name
-  key          = "retired.tmp"
-  content      = "STALE-STATE-ONLY"
-  content_type = "text/plain"
-  etag         = md5("STALE-STATE-ONLY")
-}
