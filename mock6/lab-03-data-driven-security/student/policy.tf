@@ -13,7 +13,7 @@ locals {
     for row in local.raw_rules : {
       direction       = lower(trimspace(tostring(row.direction)))
       source          = trimspace(tostring(row.source))
-      destination     = trimspace(tostring(lookup(row, "destnation", "")))
+      destination     = trimspace(tostring(lookup(row, "destination", "")))
       from_port       = row.from_port
       to_port         = row.to_port
       protocol        = lower(trimspace(tostring(row.protocol)))
@@ -25,7 +25,8 @@ locals {
 
   destination_port_map = {
     for row in local.normalized_rules :
-    "${row.destination}:${row.from_port}" => row
+    "${row.source}|${row.destination}|${row.protocol}|${row.from_port}|${row.to_port}" => row
+    if row.direction == "ingress" && lower(row.enabled) == "true"
   }
 
   source_resolution_preview = [
@@ -34,8 +35,8 @@ locals {
   ]
 
   rule_instances = {
-    for index, row in local.normalized_rules :
-    "${index}-${row.destination}-${row.from_port}" => row
+    for key, row in local.destination_port_map :
+    key => row
   }
 
   security_group_ids = {
