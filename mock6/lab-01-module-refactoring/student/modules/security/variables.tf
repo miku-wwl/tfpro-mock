@@ -15,3 +15,7 @@ variable "group_definitions" {
 variable "resource_tags" {
   type = map(string)
 }
+
+variable "operator_cidrs" {
+  type = set(string)
+}

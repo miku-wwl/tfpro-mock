@@ -3,5 +3,5 @@ output "vpc_id" {
 }
 
 output "subnet_ids" {
-  value = toset(aws_subnet.relay_segment[*].id)
+  value = aws_subnet.relay_segment[*].id
 }
