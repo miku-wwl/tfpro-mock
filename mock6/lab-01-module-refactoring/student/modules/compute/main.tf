@@ -3,7 +3,7 @@ resource "aws_instance" "relay_node" {
 
   ami                    = var.ami_id
   instance_type          = each.value.instance_type
-  subnet_id              = var.subnet_ids[each.value.subnet_key]
+  subnet_id              = var.subnet_ids[tostring(each.value.subnet_index)]
   vpc_security_group_ids = [for group_name in each.value.security_groups : var.security_group_ids[group_name]]
   iam_instance_profile   = var.instance_profile_name
 

@@ -12,12 +12,12 @@ data "aws_iam_policy_document" "compute_trust" {
 }
 
 resource "aws_iam_role" "runtime_role" {
-  name               = "${var.naming_context.prefix}-${var.naming_context.environment}-runtime"
+  name               = "${var.naming_context.prefix}-${var.naming_context.stage}-runtime"
   assume_role_policy = data.aws_iam_policy_document.compute_trust.json
   tags               = var.resource_tags
 }
 
 resource "aws_iam_instance_profile" "runtime_profile" {
-  name = "${var.naming_context.prefix}-${var.naming_context.environment}-profile"
+  name = "${var.naming_context.prefix}-${var.naming_context.stage}-profile"
   role = aws_iam_role.runtime_role.name
 }

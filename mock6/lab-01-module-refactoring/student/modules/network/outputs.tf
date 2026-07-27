@@ -3,5 +3,7 @@ output "vpc_id" {
 }
 
 output "subnet_ids" {
-  value = aws_subnet.relay_segment[*].id
+  value = {
+    for index, subnet in aws_subnet.relay_segment : tostring(index) => subnet.id
+  }
 }

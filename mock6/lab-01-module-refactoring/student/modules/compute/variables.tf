@@ -7,7 +7,7 @@ variable "ami_id" {
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type = map(string)
 }
 
 variable "security_group_ids" {
@@ -20,7 +20,7 @@ variable "instance_profile_name" {
 
 variable "nodes" {
   type = map(object({
-    subnet_key      = string
+    subnet_index    = number
     security_groups = set(string)
     instance_type   = string
   }))
