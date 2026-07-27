@@ -24,6 +24,11 @@ locals {
     }
   ]
 
+  ingress_rules = [
+    for rule in local.normalized_rules : rule
+    if rule.direction == "ingress" && rule.enabled
+  ]
+
   # This key is too small and collides for the two operations:8082 rows.
   rules_by_destination_port = {
     for rule in local.normalized_rules :
@@ -32,7 +37,7 @@ locals {
 
   # This map avoids the duplicate only by binding addresses to input order.
   indexed_rules = {
-    for index, rule in local.normalized_rules : tostring(index) => rule
+    for index, rule in local.ingress_rules : tostring(index) => rule
   }
 
   security_group_ids = {
