@@ -35,14 +35,6 @@ resource "aws_s3_object" "base" {
   etag         = md5("BASE-CONTENT")
 }
 
-resource "aws_s3_object" "retained" {
-  bucket       = aws_s3_bucket.assets.id
-  key          = "retained.txt"
-  content      = "KEEP-ME"
-  content_type = "text/plain"
-  etag         = md5("KEEP-ME")
-}
-
 resource "aws_s3_object" "delivery_receipt" {
   bucket       = aws_s3_bucket.assets.id
   key          = "new.txt"

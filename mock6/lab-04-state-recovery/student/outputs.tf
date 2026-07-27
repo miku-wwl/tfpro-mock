@@ -23,7 +23,6 @@ output "security_group_rule_ids" {
 output "managed_object_keys" {
   value = sort([
     aws_s3_object.base.key,
-    aws_s3_object.retained.key,
     aws_s3_object.delivery_receipt.key,
   ])
 }
