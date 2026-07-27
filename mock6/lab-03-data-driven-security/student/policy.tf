@@ -5,9 +5,13 @@ locals {
     yaml = "${path.module}/data/rules.yaml"
   }
 
-  raw_rules = var.rules_format == "csv" ? csvdecode(file(local.policy_paths.csv)) : (
-    var.rules_format == "json" ? jsondecode(file(local.policy_paths.json)) : yamldecode(file(local.policy_paths.yaml))
-  )
+  decoded_rules = {
+    csv  = csvdecode(file(local.policy_paths.csv))
+    json = jsondecode(file(local.policy_paths.json))
+    yaml = yamldecode(file(local.policy_paths.yaml))
+  }
+
+  raw_rules = local.decoded_rules[var.rules_format]
 
   normalized_rules = [
     for row in local.raw_rules : {
