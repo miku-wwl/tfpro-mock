@@ -5,7 +5,7 @@ resource "aws_launch_template" "runtime" {
 
   tag_specifications {
     resource_type = "instance"
-    tags          = {
+    tags = {
       Service = "batch-renderer"
     }
   }
