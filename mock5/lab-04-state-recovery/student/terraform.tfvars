@@ -1,4 +1,4 @@
-assets_bucket_name = "tfr05-lab04-assets-recovered"
+assets_bucket_name = "tfr05-lab04-assets"
 logs_bucket_name   = "tfr05-lab04-logs"
 
 iam_user_names = {
@@ -7,5 +7,5 @@ iam_user_names = {
   gamma = "tfr05-lab04-gamma"
 }
 
-vpc_id             = "vpc-00000000"
+vpc_id              = "vpc-00000000"
 security_group_name = "tfr05-lab04-application"

@@ -1,13 +1,13 @@
 variable "aws_region" {
   type        = string
   description = "AWS region used by the LocalStack provider."
-  default     = "us-west-2"
+  default     = "us-east-1"
 }
 
 variable "localstack_endpoint" {
   type        = string
   description = "LocalStack edge endpoint."
-  default     = "http://localhost:4570"
+  default     = "http://127.0.0.1:4566"
 }
 
 provider "aws" {

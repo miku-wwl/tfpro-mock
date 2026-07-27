@@ -1,15 +1,13 @@
 output "bucket_names" {
   value = toset([
-    aws_s3_bucket.primary.id,
+    aws_s3_bucket.assets.id,
     aws_s3_bucket.logs.id,
   ])
 }
 
 output "iam_user_names" {
   value = [
-    aws_iam_user.alpha.name,
-    aws_iam_user.beta.name,
-    aws_iam_user.gamma.name,
+    for user in values(aws_iam_user.members) : user.name
   ]
 }
 

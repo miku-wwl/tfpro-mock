@@ -1,13 +1,11 @@
 locals {
   generated_files = {
     "s3.txt" = join("\n", sort(tolist(toset([
-      aws_s3_bucket.primary.id,
+      aws_s3_bucket.assets.id,
       aws_s3_bucket.logs.id,
     ]))))
     "iam-users.txt" = join("\n", sort([
-      aws_iam_user.alpha.name,
-      aws_iam_user.beta.name,
-      aws_iam_user.gamma.name,
+      for user in values(aws_iam_user.members) : user.name
     ]))
     "security.txt" = join("\n", concat(
       [aws_security_group.application.id],
