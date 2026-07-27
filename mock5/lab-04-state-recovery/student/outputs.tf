@@ -24,6 +24,5 @@ output "security_group_rule_ids" {
 output "managed_object_keys" {
   value = [
     aws_s3_object.base.key,
-    aws_s3_object.retained.key,
   ]
 }
