@@ -35,7 +35,7 @@ locals {
 
   source_resolution_preview = [
     for row in local.normalized_rules :
-    row.source == "-" ? data.aws_subnet.network[row.source_selector].cidr_block : [data.aws_security_group.zone[row.source].id]
+    row.source == "-" ? data.aws_subnet.network[row.source_selector].cidr_block : data.aws_security_group.zone[row.source].id
   ]
 
   rule_instances = {
@@ -52,11 +52,11 @@ resource "aws_vpc_security_group_ingress_rule" "policy" {
   for_each = local.rule_instances
 
   security_group_id            = local.security_group_ids[each.value.destination]
-  cidr_ipv4                    = each.value.source == "-" ? "10.77.10.0/24" : each.value.source
-  referenced_security_group_id = try(local.security_group_ids[each.value.source], "sg-0123456789abcdef0")
+  cidr_ipv4                    = each.value.source == "-" ? data.aws_subnet.network[each.value.source_selector].cidr_block : null
+  referenced_security_group_id = each.value.source == "-" ? null : local.security_group_ids[each.value.source]
 
-  from_port   = each.value.protocol == "-1" ? "" : each.value.from_port
-  to_port     = each.value.protocol == "-1" ? "" : each.value.to_port
+  from_port   = each.value.protocol == "-1" ? null : each.value.from_port
+  to_port     = each.value.protocol == "-1" ? null : each.value.to_port
   ip_protocol = each.value.protocol
   description = each.value.description
 }
