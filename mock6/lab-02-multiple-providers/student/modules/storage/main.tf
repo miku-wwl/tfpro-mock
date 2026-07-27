@@ -1,5 +1,6 @@
 resource "aws_s3_bucket" "vault" {
-  bucket = "northstar-release-vault-000000000000"
+  provider = aws.identity
+  bucket   = "northstar-release-vault-000000000000"
 
   tags = {
     DataClass = "release-evidence"

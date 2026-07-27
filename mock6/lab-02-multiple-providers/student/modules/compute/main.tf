@@ -1,4 +1,5 @@
 resource "aws_launch_template" "runtime" {
+  provider      = aws.compute
   name          = "northstar-batch-runtime"
   image_id      = "ami-0f1e2d3c4b5a69788"
   instance_type = "t3.micro"
@@ -12,6 +13,7 @@ resource "aws_launch_template" "runtime" {
 }
 
 resource "aws_autoscaling_group" "pool" {
+  provider           = aws.compute
   name               = "northstar-batch-workers"
   availability_zones = ["us-east-1a"]
   desired_capacity   = 2

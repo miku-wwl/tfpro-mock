@@ -1,5 +1,6 @@
 resource "aws_iam_role" "publisher" {
-  name = "northstar-delivery-publisher"
+  provider = aws.identity
+  name     = "northstar-delivery-publisher"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -17,8 +18,9 @@ resource "aws_iam_role" "publisher" {
 }
 
 resource "aws_iam_role_policy" "publisher_access" {
-  name = "artifact-read-access"
-  role = aws_iam_role.publisher.id
+  provider = aws.identity
+  name     = "artifact-read-access"
+  role     = aws_iam_role.publisher.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
