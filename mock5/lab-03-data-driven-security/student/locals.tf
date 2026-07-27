@@ -4,25 +4,23 @@ locals {
   yaml_rules = yamldecode(file("${path.module}/data/rules.yaml"))
 
   # STARTER DEFECTS ARE INTENTIONAL. Repair this without duplicating resource code.
-  selected_rules = (
-    var.rules_format == "csv" ? local.csv_rules :
-    var.rules_format == "json" ? local.json_rules :
-    local.yaml_rules
+  selected_rules = jsondecode(
+    var.rules_format == "csv" ? jsonencode(local.csv_rules) :
+    var.rules_format == "json" ? jsonencode(local.json_rules) :
+    jsonencode(local.yaml_rules)
   )
 
   normalized_rules = [
-    for index, rule in local.selected_rules : {
-      input_index     = index
+    for rule in local.selected_rules : {
       direction       = lower(rule.direction)
-      source          = rule.source
-      destination     = rule.destination
-      from_port       = rule.from_port
-      to_port         = trimspace(tostring(rule.to_port)) == "" ? "" : tonumber(rule.to_port)
-      protocol        = lower(tostring(rule.protocol))
-      source_selector = rule.source_seletor
+      source          = lower(rule.source)
+      destination     = lower(rule.destination)
+      from_port       = try(tonumber(rule.from_port), null)
+      to_port         = try(tonumber(rule.to_port), null)
+      protocol        = lower(rule.protocol)
+      source_selector = try(rule.source_selector, null) == null ? "" : lower(rule.source_selector)
       description     = rule.description
-      enabled         = rule.enabled
-      source_value    = rule.source == "-" ? [rule.source_selector] : rule.source
+      enabled         = tobool(rule.enabled)
     }
   ]
 
