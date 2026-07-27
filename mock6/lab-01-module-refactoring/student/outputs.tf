@@ -4,23 +4,23 @@ output "shared_name" {
 }
 
 output "vpc_id" {
-  value = aws_vpc.relay_fabric.id
+  value = module.network.vpc_id
 }
 
 output "subnet_ids" {
-  value = aws_subnet.relay_segment[*].id
+  value = values(module.network.subnet_ids)
 }
 
 output "security_group_ids" {
-  value = { for name, group in aws_security_group.boundary : name => group.id }
+  value = module.security.security_group_ids
 }
 
 output "instance_profile_name" {
-  value = aws_iam_instance_profile.runtime_profile.name
+  value = module.identity.instance_profile_name
 }
 
 output "instance_ids" {
-  value = { for name, node in aws_instance.relay_node : name => node.id }
+  value = module.compute.instance_ids
 }
 
 output "artifact_bucket_name" {
@@ -37,12 +37,12 @@ output "state_bucket_name" {
 
 output "baseline_resource_ids" {
   value = {
-    vpc_id                = aws_vpc.relay_fabric.id
-    subnet_ids            = aws_subnet.relay_segment[*].id
-    security_group_ids    = { for name, group in aws_security_group.boundary : name => group.id }
-    instance_ids          = { for name, node in aws_instance.relay_node : name => node.id }
-    iam_role_name         = aws_iam_role.runtime_role.name
-    instance_profile_name = aws_iam_instance_profile.runtime_profile.name
+    vpc_id                = module.network.vpc_id
+    subnet_ids            = values(module.network.subnet_ids)
+    security_group_ids    = module.security.security_group_ids
+    instance_ids          = module.compute.instance_ids
+    iam_role_name         = module.identity.role_name
+    instance_profile_name = module.identity.instance_profile_name
     artifact_bucket_name  = aws_s3_bucket.artifact_store.id
     artifact_object_key   = aws_s3_object.relay_manifest.key
     state_bucket_name     = aws_s3_bucket.state_archive.id
