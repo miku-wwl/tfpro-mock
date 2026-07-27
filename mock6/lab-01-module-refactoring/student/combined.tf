@@ -154,7 +154,7 @@ resource "aws_s3_bucket" "state_archive" {
 resource "aws_instance" "relay_node" {
   for_each = var.node_catalog
 
-  ami                    = "ami-0f1a2b3c4d5e6f701"
+  ami                    = "ami-c615e0c9"
   instance_type          = each.value.instance_type
   subnet_id              = aws_subnet.relay_segment[each.value.subnet_index].id
   vpc_security_group_ids = [for group_name in each.value.security_groups : aws_security_group.boundary[group_name].id]
