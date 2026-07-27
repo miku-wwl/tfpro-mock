@@ -26,7 +26,7 @@ variable "local_secret_key" {
 
 variable "network_layout" {
   description = "Addressing and placement for the relay platform."
-  type        = object({
+  type = object({
     vpc_cidr           = string
     subnet_cidrs       = list(string)
     availability_zones = list(string)
@@ -40,7 +40,7 @@ variable "operator_cidrs" {
 
 variable "node_catalog" {
   description = "Workload node placement and security memberships."
-  type        = map(object({
+  type = map(object({
     subnet_index    = number
     security_groups = set(string)
     instance_type   = string
@@ -49,7 +49,7 @@ variable "node_catalog" {
 
 variable "business_metadata" {
   description = "Stable business context applied to resources."
-  type        = object({
+  type = object({
     owner       = string
     cost_centre = string
     service     = string
