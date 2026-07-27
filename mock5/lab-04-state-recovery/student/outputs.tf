@@ -1,14 +1,14 @@
 output "bucket_names" {
-  value = toset([
+  value = sort([
     aws_s3_bucket.assets.id,
     aws_s3_bucket.logs.id,
   ])
 }
 
 output "iam_user_names" {
-  value = [
+  value = sort([
     for user in values(aws_iam_user.members) : user.name
-  ]
+  ])
 }
 
 output "security_group_id" {
@@ -16,7 +16,7 @@ output "security_group_id" {
 }
 
 output "security_group_rule_ids" {
-  value = toset([
+  value = sort([
     for rule in values(aws_vpc_security_group_ingress_rule.application) : rule.security_group_rule_id
   ])
 }
