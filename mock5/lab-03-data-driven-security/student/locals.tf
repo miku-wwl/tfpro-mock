@@ -40,11 +40,11 @@ locals {
   security_group_ids = {
     frontend   = data.aws_security_group.frontend.id
     datastore  = data.aws_security_group.datastore.id
-    operations = "sg-0123456789abcdef0"
+    operations = data.aws_security_group.operations.id
   }
 
   subnet_cidrs = {
-    public         = "10.73.10.0/24"
+    public         = data.aws_subnet.public.cidr_block
     administration = data.aws_subnet.administration.cidr_block
   }
 

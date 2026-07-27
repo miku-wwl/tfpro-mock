@@ -5,8 +5,8 @@ data "aws_vpc" "practice" {
   }
 
   filter {
-    name   = "tag:ComponentRole"
-    values = ["vpc"]
+    name   = "tag:LogicalName"
+    values = ["core"]
   }
 }
 
@@ -22,7 +22,7 @@ data "aws_subnet" "public" {
   }
 
   filter {
-    name   = "tag:ComponentRole"
+    name   = "tag:LogicalName"
     values = ["public"]
   }
 }
@@ -39,7 +39,7 @@ data "aws_subnet" "administration" {
   }
 
   filter {
-    name   = "tag:ComponentRole"
+    name   = "tag:LogicalName"
     values = ["administration"]
   }
 }
@@ -56,7 +56,7 @@ data "aws_security_group" "frontend" {
   }
 
   filter {
-    name   = "tag:ComponentRole"
+    name   = "tag:LogicalName"
     values = ["frontend"]
   }
 }
@@ -73,7 +73,7 @@ data "aws_security_group" "datastore" {
   }
 
   filter {
-    name   = "tag:ComponentRole"
+    name   = "tag:LogicalName"
     values = ["datastore"]
   }
 }
@@ -90,7 +90,7 @@ data "aws_security_group" "operations" {
   }
 
   filter {
-    name   = "tag:ComponentRole"
+    name   = "tag:LogicalName"
     values = ["operations"]
   }
 }
