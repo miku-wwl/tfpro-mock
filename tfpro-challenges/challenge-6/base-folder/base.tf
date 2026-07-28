@@ -1,14 +1,29 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "5.82.2"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "2.5.2"
     }
   }
 }
 
 provider "aws" {
- region = "us-east-1"
+  region                      = "us-east-1"
+  access_key                  = "test"
+  secret_key                  = "test"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+
+  endpoints {
+    iam = "http://localhost:4566"
+    sts = "http://localhost:4566"
+  }
 }
 
 data "aws_caller_identity" "current" {}
@@ -31,16 +46,16 @@ resource "aws_iam_access_key" "iam_user_key" {
 
 resource "aws_iam_access_key" "ec2_user" {
   user = aws_iam_user.ec2_user.name
-} 
+}
 
 resource "aws_iam_access_key" "default_user" {
   user = aws_iam_user.default_user.name
-} 
+}
 
 resource "aws_iam_policy" "assume_role_policy" {
   name        = "AssumeRolePolicy"
   description = "Allows sts:AssumeRole for all IAM roles"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
@@ -143,8 +158,8 @@ resource "aws_iam_policy" "read_only_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "s3:ListAllMyBuckets",
-        Effect = "Allow",
+        Action   = "s3:ListAllMyBuckets",
+        Effect   = "Allow",
         Resource = "*",
       },
       {
@@ -177,7 +192,7 @@ resource "aws_iam_role_policy_attachment" "read_only_role_policy_attachment" {
 
 resource "local_file" "creds_file" {
   filename = "default-creds.txt"
-  content = <<EOF
+  content  = <<EOF
 [default]
 aws_access_key_id = ${aws_iam_access_key.default_user.id}
 aws_secret_access_key = ${aws_iam_access_key.default_user.secret}
@@ -185,14 +200,13 @@ EOF
 }
 
 output "ec2_fullaccess_role" {
-    value = aws_iam_role.ec2_full_access.arn
+  value = aws_iam_role.ec2_full_access.arn
 }
 
 output "iam_fullaccess_role" {
-    value = aws_iam_role.iam_full_access.arn
+  value = aws_iam_role.iam_full_access.arn
 }
 
 output "read_only_role_arn" {
   value = aws_iam_role.read_only_role.arn
 }
-
