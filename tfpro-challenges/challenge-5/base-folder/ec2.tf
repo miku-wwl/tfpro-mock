@@ -9,10 +9,10 @@ data "aws_subnet" "challenge_5" {
   }
 }
 
-resource "aws_instance" "challenge_5" {
-  for_each = data.aws_subnet.challenge_5
+module "ec2" {
+  source = "../modules/ec2"
 
-  ami           = "ami-df5de72bdb3b"
-  instance_type = "t2.micro"
-  subnet_id     = each.value.id
+  subnet_ids = {
+    for name, subnet in data.aws_subnet.challenge_5 : name => subnet.id
+  }
 }
