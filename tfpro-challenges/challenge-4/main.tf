@@ -21,3 +21,26 @@ provider "aws" {
     sts = "http://localhost:4566"
   }
 }
+
+locals {
+  ec2_data = csvdecode(file("${path.module}/ec2.csv"))
+
+  us_east_instances = [
+    for instance in local.ec2_data : instance
+    if instance.Region == "us-east-1"
+  ]
+}
+
+resource "aws_instance" "this" {
+  count = length(local.us_east_instances)
+
+  ami = local.us_east_instances[count.index].AMI_ID
+  instance_type = lookup({
+    micro = "t2.micro"
+    nano  = "t3.nano"
+  }, local.us_east_instances[count.index].instance_type)
+
+  tags = {
+    Name = local.us_east_instances[count.index].Team_Name
+  }
+}
