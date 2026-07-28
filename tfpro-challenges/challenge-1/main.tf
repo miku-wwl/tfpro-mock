@@ -1,25 +1,40 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "5.80.0"
     }
   }
 }
 
 provider "aws" {
- region = "us-east-1"
- default_tags {
-   tags = {
-     Environment = var.environement
-   }
- }
+  region                      = "us-east-1"
+  access_key                  = "test"
+  secret_key                  = "test"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+  s3_use_path_style           = true
+
+  endpoints {
+    iam = "http://localhost:4566"
+    s3  = "http://localhost:4566"
+    ec2 = "http://localhost:4566"
+    sts = "http://localhost:4566"
+  }
+
+  default_tags {
+    tags = {
+      Environment = var.environement
+    }
+  }
 }
 resource "random_pet" "this" {}
 
 resource "aws_iam_user" "lb" {
   count = 3
-  name = "${random_pet.this.id}-${var.org-name}-${count.index}"
+  name  = "${random_pet.this.id}-${var.org-name}-${count.index}"
 }
 
 # This policy must be associated with all IAM users created through this code.
@@ -43,18 +58,18 @@ resource "aws_iam_user_policy" "lb_ro" {
 
 
 resource "aws_s3_bucket" "example" {
-  for_each  = var.s3_buckets 
-   bucket = "${random_pet.this.id}-${each.value}"
+  for_each = var.s3_buckets
+  bucket   = "${random_pet.this.id}-${each.value}"
 }
 
 resource "aws_s3_object" "object" {
-  for_each  = var.s3_buckets 
-  bucket = aws_s3_bucket.example[each.key].id
-  key    = var.s3_base_object
+  for_each = var.s3_buckets
+  bucket   = aws_s3_bucket.example[each.key].id
+  key      = var.s3_base_object
 }
 
 resource "aws_security_group" "example" {
-  name        = var.sg_name
+  name = var.sg_name
 }
 
 resource "aws_vpc_security_group_ingress_rule" "example" {
