@@ -44,3 +44,16 @@ resource "aws_instance" "this" {
     Name = local.us_east_instances[count.index].Team_Name
   }
 }
+
+output "running_ec2" {
+  value = [
+    for index, instance in aws_instance.this : {
+      firewall_id = toset(instance.vpc_security_group_ids)
+      id          = instance.id
+      region      = local.us_east_instances[index].Region
+      subnet      = instance.subnet_id
+      team        = local.us_east_instances[index].Team_Name
+      type        = local.us_east_instances[index].instance_type
+    }
+  ]
+}
