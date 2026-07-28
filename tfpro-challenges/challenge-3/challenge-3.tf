@@ -1,25 +1,42 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "5.80.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "2.5.2"
     }
   }
 }
 
 provider "aws" {
- region = "us-east-1"
+  region                      = "us-east-1"
+  access_key                  = "test"
+  secret_key                  = "test"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+
+  endpoints {
+    autoscaling = "http://localhost:4566"
+    ec2         = "http://localhost:4566"
+    iam         = "http://localhost:4566"
+    sts         = "http://localhost:4566"
+  }
 }
 
 
 resource "aws_launch_template" "this" {
-    name     = "terraform-launch-template"
-    image_id = "ami-06b21ccaeff8cd686"
-    instance_type = "t2.micro"
+  name          = "terraform-launch-template"
+  image_id      = "ami-06b21ccaeff8cd686"
+  instance_type = "t2.micro"
 }
 
 resource "aws_autoscaling_group" "dev" {
-  availability_zones = ["us-east-1a","us-east-1b"]
+  availability_zones = ["us-east-1a", "us-east-1b"]
   desired_capacity   = 1
   max_size           = 2
   min_size           = 1
@@ -30,15 +47,15 @@ resource "aws_autoscaling_group" "dev" {
   }
 
   tag {
-    key   = "Team"
-    value = "SRE"
+    key                 = "Team"
+    value               = "SRE"
     propagate_at_launch = true
   }
 }
 
 resource "aws_iam_user" "lb" {
   count = 1
-  name = "success-user"
+  name  = "success-user"
 }
 
 resource "aws_iam_user_policy" "lb_ro" {
@@ -61,6 +78,6 @@ resource "aws_iam_user_policy" "lb_ro" {
 data "aws_caller_identity" "local" {}
 
 resource "local_file" "this" {
-  content = data.aws_caller_identity.local.account_id
+  content  = data.aws_caller_identity.local.account_id
   filename = "account-number.txt"
 }
