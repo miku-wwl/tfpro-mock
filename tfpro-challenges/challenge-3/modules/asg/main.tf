@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+    }
+  }
+}
+
 resource "aws_launch_template" "this" {
   name          = "terraform-launch-template"
   image_id      = "ami-df5de72bdb3b"
