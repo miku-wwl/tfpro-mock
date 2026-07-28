@@ -32,8 +32,18 @@ provider "aws" {
 }
 resource "random_pet" "this" {}
 
+data "aws_ami" "this" {
+  most_recent = true
+  owners      = ["000000000000"]
+
+  filter {
+    name   = "tag:ec2_vm_manager"
+    values = ["docker"]
+  }
+}
+
 resource "aws_instance" "this" {
-  ami                  = "ami-0ec10929233384c7f"
+  ami                  = data.aws_ami.this.id
   instance_type        = "t2.micro"
   iam_instance_profile = aws_iam_instance_profile.test_profile.name
 }
