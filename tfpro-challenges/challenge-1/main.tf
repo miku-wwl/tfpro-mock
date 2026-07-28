@@ -73,33 +73,12 @@ resource "aws_s3_object" "object" {
   key      = var.s3_base_object
 }
 
-resource "aws_security_group" "example" {
-  name = var.sg_name
-}
-
-resource "aws_vpc_security_group_ingress_rule" "example" {
-  security_group_id = aws_security_group.example.id
-
-  cidr_ipv4   = "10.0.0.0/8"
-  from_port   = 80
-  ip_protocol = "tcp"
-  to_port     = 80
-}
-
 output "s3_buckets" {
   value = [for bucket in aws_s3_bucket.example : bucket.bucket]
 }
 
 output "user_names" {
   value = [for user in aws_iam_user.lb : user.name]
-}
-
-output "sg_id" {
-  value = aws_security_group.example.id
-}
-
-output "sg_rule_id" {
-  value = aws_vpc_security_group_ingress_rule.example.id
 }
 
 resource "local_file" "s3_buckets" {
@@ -110,9 +89,4 @@ resource "local_file" "s3_buckets" {
 resource "local_file" "iam_users" {
   filename = "${path.module}/iam-users.txt"
   content  = "${join("\n", [for user in aws_iam_user.lb : user.name])}\n"
-}
-
-resource "local_file" "security_group" {
-  filename = "${path.module}/sg-combined.txt"
-  content  = "${aws_security_group.example.id}\n${aws_vpc_security_group_ingress_rule.example.id}\n"
 }
