@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "5.80.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
   }
 }
 
@@ -96,4 +100,19 @@ output "sg_id" {
 
 output "sg_rule_id" {
   value = aws_vpc_security_group_ingress_rule.example.id
+}
+
+resource "local_file" "s3_buckets" {
+  filename = "${path.module}/s3.txt"
+  content  = "${join("\n", [for bucket in aws_s3_bucket.example : bucket.bucket])}\n"
+}
+
+resource "local_file" "iam_users" {
+  filename = "${path.module}/iam-users.txt"
+  content  = "${join("\n", [for user in aws_iam_user.lb : user.name])}\n"
+}
+
+resource "local_file" "security_group" {
+  filename = "${path.module}/sg-combined.txt"
+  content  = "${aws_security_group.example.id}\n${aws_vpc_security_group_ingress_rule.example.id}\n"
 }

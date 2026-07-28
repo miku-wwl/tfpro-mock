@@ -9,6 +9,14 @@ provider "registry.terraform.io/hashicorp/aws" {
   ]
 }
 
+provider "registry.terraform.io/hashicorp/local" {
+  version     = "2.9.0"
+  constraints = "~> 2.5"
+  hashes = [
+    "h1:px3Hpv/tL288wzu5knHywTTBcrydLnnGEiF/NIQBaRs=",
+  ]
+}
+
 provider "registry.terraform.io/hashicorp/random" {
   version = "3.9.0"
   hashes = [
