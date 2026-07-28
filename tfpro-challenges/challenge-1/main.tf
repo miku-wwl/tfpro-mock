@@ -40,8 +40,9 @@ resource "aws_iam_user" "lb" {
 # This policy must be associated with all IAM users created through this code.
 
 resource "aws_iam_user_policy" "lb_ro" {
-  name = "ec2-describe-policy"
-  user = aws_iam_user.lb.name
+  count = 3
+  name  = "ec2-describe-policy"
+  user  = aws_iam_user.lb[count.index].name
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
