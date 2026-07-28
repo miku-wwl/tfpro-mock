@@ -14,9 +14,13 @@ resource "aws_launch_template" "this" {
 
 resource "aws_autoscaling_group" "dev" {
   availability_zones = ["us-east-1a", "us-east-1b"]
-  desired_capacity   = 1
+  desired_capacity   = 2
   max_size           = 2
   min_size           = 1
+
+  lifecycle {
+    ignore_changes = [desired_capacity]
+  }
 
   launch_template {
     id      = aws_launch_template.this.id
