@@ -2,7 +2,7 @@ resource "aws_vpc" "main" {
   cidr_block           = "10.77.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = { Name = "challenge-5-vpc" }
+  tags                 = { Name = "challenge-5-vpc" }
 }
 
 resource "aws_subnet" "challenge_5" {
@@ -13,14 +13,14 @@ resource "aws_subnet" "challenge_5" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = each.value.cidr
   availability_zone = each.value.az
-  tags = { Name = "subnet-${each.key}" }
+  tags              = { Name = "subnet-${each.key}" }
 }
 
 resource "aws_vpc" "random" {
   cidr_block           = "10.66.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
-  tags = { Name = "random-vpc" }
+  tags                 = { Name = "random-vpc" }
 }
 
 resource "aws_subnet" "random" {
@@ -31,5 +31,15 @@ resource "aws_subnet" "random" {
   vpc_id            = aws_vpc.random.id
   cidr_block        = each.value.cidr
   availability_zone = each.value.az
-  tags = { Name = "subnet-${each.key}" }
+  tags              = { Name = "subnet-${each.key}" }
+}
+
+output "vpc_id" {
+  value = aws_vpc.main.id
+}
+
+output "subnet_ids" {
+  value = {
+    for name, subnet in aws_subnet.challenge_5 : name => subnet.id
+  }
 }
