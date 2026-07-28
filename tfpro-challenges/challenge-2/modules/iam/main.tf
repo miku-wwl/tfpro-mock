@@ -24,7 +24,8 @@ resource "aws_iam_instance_profile" "test_profile" {
 
 resource "aws_iam_user" "lb" {
   count = 3
-  name  = "${var.pet_id}-${var.org_name}-${count.index}"
+  # name  = "${var.pet_id}-${var.org_name}-${count.index}"
+  name = "prompt-jawfish-${var.org_name}-${count.index}"
 }
 
 resource "aws_iam_user_policy" "lb_ro" {

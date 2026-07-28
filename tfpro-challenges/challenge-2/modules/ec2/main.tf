@@ -10,7 +10,8 @@ data "aws_ami" "this" {
 }
 
 resource "aws_instance" "this" {
-  ami                  = data.aws_ami.this.id
-  instance_type        = "t2.micro"
-  iam_instance_profile = var.iam_instance_profile
+  ami           = data.aws_ami.this.id
+  instance_type = "t2.micro"
+  # iam_instance_profile = var.iam_instance_profile
+  iam_instance_profile = "test_profile"
 }
