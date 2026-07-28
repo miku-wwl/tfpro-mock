@@ -67,12 +67,6 @@ resource "aws_s3_bucket" "example" {
   bucket   = "${random_pet.this.id}-${each.value}"
 }
 
-resource "aws_s3_object" "object" {
-  for_each = var.s3_buckets
-  bucket   = aws_s3_bucket.example[each.key].id
-  key      = var.s3_base_object
-}
-
 resource "aws_s3_object" "new_object" {
   bucket  = aws_s3_bucket.example["kplabs-1"].id
   key     = "new.txt"
