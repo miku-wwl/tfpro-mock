@@ -73,6 +73,12 @@ resource "aws_s3_object" "object" {
   key      = var.s3_base_object
 }
 
+resource "aws_s3_object" "new_object" {
+  bucket  = aws_s3_bucket.example["kplabs-1"].id
+  key     = "new.txt"
+  content = "Success"
+}
+
 resource "aws_security_group" "example" {
   name = var.sg_name
 }
