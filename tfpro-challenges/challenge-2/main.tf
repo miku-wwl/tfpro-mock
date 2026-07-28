@@ -36,13 +36,13 @@ module "random" {
 
 module "iam" {
   source   = "./modules/iam"
-  pet_id   = "prompt-jawfish"
+  pet_id   = module.random.pet_id
   org_name = var.org-name
 }
 
 module "s3" {
   source      = "./modules/s3"
-  pet_id      = "prompt-jawfish"
+  pet_id      = module.random.pet_id
   s3_buckets  = var.s3_buckets
   base_object = var.s3_base_object
 }
@@ -54,7 +54,7 @@ module "sg" {
 
 module "ec2" {
   source               = "./modules/ec2"
-  iam_instance_profile = "test_profile"
+  iam_instance_profile = module.iam.instance_profile_name
 }
 
 moved {

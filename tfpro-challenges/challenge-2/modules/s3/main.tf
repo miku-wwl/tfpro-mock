@@ -4,8 +4,7 @@ variable "base_object" {}
 
 resource "aws_s3_bucket" "example" {
   for_each = var.s3_buckets
-  # bucket   = "${var.pet_id}-${each.value}"
-  bucket = "prompt-jawfish-${each.value}"
+  bucket   = "${var.pet_id}-${each.value}"
 }
 
 resource "aws_s3_object" "object" {
