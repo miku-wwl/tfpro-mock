@@ -31,3 +31,13 @@ output "list_list_condition" {
     if instance.instance_type == "nano"
   ]
 }
+
+output "instance_count_by_type" {
+  value = {
+    for instance_type in distinct([for instance in local.ec2_data : instance.instance_type]) :
+    instance_type => length([
+      for instance in local.ec2_data : instance
+      if instance.instance_type == instance_type
+    ])
+  }
+}
