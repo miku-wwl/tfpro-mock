@@ -24,3 +24,10 @@ output "unique_team_names" {
 output "regions_list_of_lists" {
   value = [for instance in local.ec2_data : [instance.Region]]
 }
+
+output "list_list_condition" {
+  value = [
+    for instance in local.ec2_data : [instance.Region]
+    if instance.instance_type == "nano"
+  ]
+}
