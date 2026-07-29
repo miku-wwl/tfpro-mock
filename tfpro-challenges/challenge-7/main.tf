@@ -41,3 +41,12 @@ output "instance_count_by_type" {
     ])
   }
 }
+
+output "instance_details" {
+  value = [
+    for instance in local.ec2_data : {
+      team = instance.Team_Name
+      type = instance.instance_type
+    }
+  ]
+}
