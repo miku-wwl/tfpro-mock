@@ -30,3 +30,13 @@ resource "aws_vpc_security_group_ingress_rule" "this" {
   to_port           = each.value.to_port
   ip_protocol       = each.value.protocol
 }
+
+output "filtered_data" {
+  value = {
+    for index, rule in local.ingress_rules : index => {
+      cidr_block = rule.cidr_block
+      from_port  = rule.from_port
+      to_port    = rule.to_port
+    }
+  }
+}
