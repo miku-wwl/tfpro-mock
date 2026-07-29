@@ -16,3 +16,7 @@ locals {
 output "list_amis" {
   value = [for instance in local.ec2_data : instance.AMI_ID]
 }
+
+output "unique_team_names" {
+  value = distinct([for instance in local.ec2_data : instance.Team_Name])
+}
