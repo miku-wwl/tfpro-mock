@@ -50,3 +50,15 @@ output "instance_details" {
     }
   ]
 }
+
+output "map_of_maps" {
+  value = {
+    for instance in local.ec2_data :
+    "${instance.instance_type}_${instance.Region}_${instance.Team_Name}" => {
+      ami_id        = instance.AMI_ID
+      instance_type = instance.instance_type
+      region        = instance.Region
+      team_name     = instance.Team_Name
+    }
+  }
+}
