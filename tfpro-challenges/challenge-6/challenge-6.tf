@@ -102,9 +102,8 @@ output "account_id" {
 
 
 resource "aws_iam_role" "cw_full_access" {
-  provider            = aws.iam
-  name                = "CloudWatchFullAccess"
-  managed_policy_arns = ["arn:aws:iam::aws:policy/CloudWatchFullAccess"]
+  provider = aws.iam
+  name     = "CloudWatchFullAccess"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -116,4 +115,10 @@ resource "aws_iam_role" "cw_full_access" {
       Action = "sts:AssumeRole"
     }]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "cw_full_access" {
+  provider   = aws.iam
+  role       = aws_iam_role.cw_full_access.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchFullAccess"
 }
