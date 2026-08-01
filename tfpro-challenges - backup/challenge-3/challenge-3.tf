@@ -1,4 +1,6 @@
 terraform {
+  required_version = "= 1.14.0"
+
   required_providers {
     aws = {
       source = "hashicorp/aws"
@@ -8,7 +10,19 @@ terraform {
 }
 
 provider "aws" {
- region = "us-east-1"
+  region                      = "us-east-1"
+  access_key                  = "test"
+  secret_key                  = "test"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+
+  endpoints {
+    iam = "http://127.0.0.1:4566"
+    ec2 = "http://127.0.0.1:4566"
+    sts = "http://127.0.0.1:4566"
+  }
 }
 
 
