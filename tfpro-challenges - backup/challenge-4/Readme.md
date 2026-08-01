@@ -27,6 +27,13 @@ Based on the contents of `ec2.csv` file, create EC2 instance based on following 
 
 ### Task 2 - Output Values
 
+### LocalStack Environment
+
+This lab uses the local LocalStack endpoint at `http://127.0.0.1:4566`.
+The Amazon Linux 2023 AMI available in LocalStack is `ami-024f768332f0`.
+Therefore, both `us-east-1` records in `ec2.csv` use this AMI. The records
+from other Regions remain unchanged to test the Region filtering logic.
+
 Create output values that display the following information for each created EC2 instance:
 
 ```sh
