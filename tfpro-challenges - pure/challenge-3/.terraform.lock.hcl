@@ -1,0 +1,17 @@
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
+
+provider "registry.terraform.io/hashicorp/aws" {
+  version     = "5.80.0"
+  constraints = "5.80.0"
+  hashes = [
+    "h1:Qg45JNIes88ZwSZ2q3cMHE08GmBTOIOvcNSshQlG7zs=",
+  ]
+}
+
+provider "registry.terraform.io/hashicorp/local" {
+  version = "2.9.0"
+  hashes = [
+    "h1:px3Hpv/tL288wzu5knHywTTBcrydLnnGEiF/NIQBaRs=",
+  ]
+}
