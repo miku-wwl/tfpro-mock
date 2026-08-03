@@ -19,9 +19,10 @@ provider "aws" {
   skip_region_validation      = true
 
   endpoints {
-    iam = "http://127.0.0.1:4566"
-    ec2 = "http://127.0.0.1:4566"
-    sts = "http://127.0.0.1:4566"
+    iam         = "http://127.0.0.1:4566"
+    ec2         = "http://127.0.0.1:4566"
+    sts         = "http://127.0.0.1:4566"
+    autoscaling = "http://127.0.0.1:4566"
   }
 }
 
