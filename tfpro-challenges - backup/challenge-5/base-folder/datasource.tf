@@ -1,7 +1,12 @@
 data "aws_subnets" "example" {
   filter {
-    name   = "vpc_id"
+    name   = "vpc-id"
     values = [aws_vpc.main.id]
+  }
+
+  filter {
+    name   = "tag:Name"
+    values = ["subnet-subnet1", "subnet-subnet2"]
   }
 }
 

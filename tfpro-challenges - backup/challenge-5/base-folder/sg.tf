@@ -9,12 +9,6 @@ resource "aws_security_group" "sg" {
   vpc_id = aws_vpc.main.id
 }
 
-output "temp" {
-  value = {
-    for k, v in local.sg_csv : "${v.name}-${v.direction}-${v.protocol}-${v.cidr_block}-${v.description}-${v.port}" => v if v.description == "app-1" && v.direction == "in"
-  }
-}
-
 resource "aws_vpc_security_group_ingress_rule" "name" {
   for_each = {
     for k, v in local.sg_csv : "${v.name}-${v.direction}-${v.protocol}-${v.cidr_block}-${v.description}-${v.port}" => v if v.description == "app-1" && v.direction == "in"
