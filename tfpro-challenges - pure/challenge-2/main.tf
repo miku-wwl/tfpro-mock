@@ -35,7 +35,7 @@ provider "aws" {
 resource "random_pet" "this" {}
 
 resource "aws_instance" "this" {
-  ami                  = "ami-0ec10929233384c7f"
+  ami                  = "ami-024f768332f0"
   instance_type        = "t2.micro"
   iam_instance_profile = aws_iam_instance_profile.test_profile.name
 }
