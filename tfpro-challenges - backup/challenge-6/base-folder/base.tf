@@ -51,16 +51,16 @@ resource "aws_iam_access_key" "iam_user_key" {
 
 resource "aws_iam_access_key" "ec2_user" {
   user = aws_iam_user.ec2_user.name
-} 
+}
 
 resource "aws_iam_access_key" "default_user" {
   user = aws_iam_user.default_user.name
-} 
+}
 
 resource "aws_iam_policy" "assume_role_policy" {
   name        = "AssumeRolePolicy"
   description = "Allows sts:AssumeRole for all IAM roles"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
@@ -163,8 +163,8 @@ resource "aws_iam_policy" "read_only_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "s3:ListAllMyBuckets",
-        Effect = "Allow",
+        Action   = "s3:ListAllMyBuckets",
+        Effect   = "Allow",
         Resource = "*",
       },
       {
@@ -197,7 +197,7 @@ resource "aws_iam_role_policy_attachment" "read_only_role_policy_attachment" {
 
 resource "local_file" "creds_file" {
   filename = "default-creds.txt"
-  content = <<EOF
+  content  = <<EOF
 [default]
 aws_access_key_id = ${aws_iam_access_key.default_user.id}
 aws_secret_access_key = ${aws_iam_access_key.default_user.secret}
@@ -205,11 +205,11 @@ EOF
 }
 
 output "ec2_fullaccess_role" {
-    value = aws_iam_role.ec2_full_access.arn
+  value = aws_iam_role.ec2_full_access.arn
 }
 
 output "iam_fullaccess_role" {
-    value = aws_iam_role.iam_full_access.arn
+  value = aws_iam_role.iam_full_access.arn
 }
 
 output "read_only_role_arn" {
