@@ -1,3 +1,3 @@
-variable "id" {
+variable "ids" {
 
 }

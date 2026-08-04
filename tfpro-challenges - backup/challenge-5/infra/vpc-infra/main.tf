@@ -52,6 +52,10 @@ output "vpc_id" {
   value = module.vpc.id
 }
 
+output "subnet_ids" {
+  value = module.vpc.subnet_ids
+}
+
 import {
   id = "vpc-4856450394f3f71b3"
   to = module.vpc.aws_vpc.main

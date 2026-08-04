@@ -6,7 +6,7 @@ resource "aws_security_group" "sg" {
   for_each = toset(["app-1-sg", "app-2-sg"])
 
   name   = each.value
-  vpc_id = aws_vpc.main.id
+  vpc_id = var.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "name" {
