@@ -10,9 +10,50 @@ terraform {
 }
 
 provider "aws" {
-  region                      = "us-east-1"
-  access_key                  = "test"
-  secret_key                  = "test"
+  profile = "iam-access"
+  alias = "iam"
+
+  shared_config_files = [ "./.aws/config" ]
+  shared_credentials_files = [ "./.aws/credentials" ]
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+  s3_use_path_style           = true
+
+  endpoints {
+    ec2 = "http://127.0.0.1:4566"
+    iam = "http://127.0.0.1:4566"
+    sts = "http://127.0.0.1:4566"
+  }
+}
+
+provider "aws" {
+  profile = "ec2-access"
+  alias = "ec2"
+
+  shared_config_files = [ "./.aws/config" ]
+  shared_credentials_files = [ "./.aws/credentials" ]
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  skip_region_validation      = true
+  s3_use_path_style           = true
+
+  endpoints {
+    ec2 = "http://127.0.0.1:4566"
+    iam = "http://127.0.0.1:4566"
+    sts = "http://127.0.0.1:4566"
+  }
+}
+
+provider "aws" {
+  profile = "readonly-access"
+  alias = "readonly"
+
+  shared_config_files = [ "./.aws/config" ]
+  access_key                  = "LKIAQAAAAAAADYOVO5ZE"
+  secret_key                  = "FjZA7hkF2zr2MR7xtNTaMUjiL59X2Ru+oRzpFCdr"
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
@@ -29,9 +70,13 @@ provider "aws" {
 resource "aws_security_group" "allow_tls" {
   name        = "demo-firewall"
 
+  provider = aws.ec2
 }
 
-data "aws_caller_identity" "current" {}
+data "aws_caller_identity" "current" {
+  
+  provider = aws.readonly
+}
 
 output "account_id" {
   value = data.aws_caller_identity.current.account_id
@@ -42,6 +87,7 @@ resource "aws_iam_role" "cw_full_access" {
   name = "CloudWatchFullAccess"
   managed_policy_arns = ["arn:aws:iam::aws:policy/CloudWatchFullAccess"] 
 
+  provider = aws.iam
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
