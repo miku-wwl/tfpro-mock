@@ -27,20 +27,31 @@ provider "aws" {
 
 
 locals {
-  
+  csv = csvdecode(file("${path.module}/ec2.csv"))
+
+  filter_csv = [for instance in local.csv : instance if instance.Region == "us-east-1"]
 }
 
-# 1. Only create EC2 instance if Region is `us-east-1`
+resource "aws_instance" "ec2" {
+  count = length(local.filter_csv)
 
-# 2. Inside `aws_instance` resource type, `count` and `count.index` should be used for iterating/looping over data. `for_each` or `for expression` should not be used inside `aws_instance` resource type. You are free to use it elsewhere. There should only be single `aws_instance` resource block in solution code.
+  instance_type = local.filter_csv[count.index].instance_type == "micro" ? "t2.micro" : "t3.nano"
+  ami           = local.filter_csv[count.index].AMI_ID
 
-# 3. Ensure that the `instance_type`, `ami_id`  are dynamically set based on the CSV file's content.
+  tags = {
+    "Name" = local.filter_csv[count.index].Team_Name
+  }
+}
 
-# 4. The following value of `instance_type`from CSV file should be replaced in `aws_instance` resource type based on the below requirement
-
-
-# instance_type,AMI_ID,Region,Team_Name
-# micro,ami-024f768332f0,us-east-1,Security
-# nano,ami-0fd05997b4dff7aac,ap-south-1,SRE
-# nano,ami-024f768332f0,us-east-1,DevOps
-# micro,ami-0995922d49dc9a17d,ap-southeast-1,SRE
+output "running_ec2" {
+  value = [
+    for index, value in local.filter_csv : {
+      firewall_id = aws_instance.ec2[index].vpc_security_group_ids
+      id          = aws_instance.ec2[index].id
+      region      = "us-east-1"
+      subnet      = aws_instance.ec2[index].subnet_id
+      "team"      = value.Team_Name
+      "type"      = value.instance_type
+    }
+  ]
+}
