@@ -32,83 +32,104 @@ provider "aws" {
     }
   }
 }
-resource "random_pet" "this" {}
 
-resource "aws_instance" "this" {
-  ami                  = "ami-024f768332f0"
-  instance_type        = "t2.micro"
-  iam_instance_profile = aws_iam_instance_profile.test_profile.name
+module "random" {
+  source = "./modules/random"
 }
 
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
+module "ec2" {
+  source = "./modules/ec2"
 
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
+  name = module.iam.name
 }
 
-resource "aws_iam_role" "test_role" {
-  name               = "ec2-iam-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+module "iam" {
+  source = "./modules/iam"
+
+  id       = module.random.id
+  org-name = var.org-name
 }
 
-resource "aws_iam_instance_profile" "test_profile" {
-  name = "test_profile"
-  role = aws_iam_role.test_role.name
+module "s3" {
+  source = "./modules/s3"
+
+  s3_buckets     = var.s3_buckets
+  id             = module.random.id
+  s3_base_object = var.s3_base_object
 }
 
-resource "aws_iam_user" "lb" {
-  count = 3
-  name  = "${random_pet.this.id}-${var.org-name}-${count.index}"
-}
+module "sg" {
+  source = "./modules/sg"
 
-# This policy must be associated with all IAM users created through this code.
-
-resource "aws_iam_user_policy" "lb_ro" {
-  name  = "ec2-describe-policy"
-  count = 3
-  user  = aws_iam_user.lb[count.index].name
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:Describe*",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
+  sg_name = var.sg_name
 }
 
 
-resource "aws_s3_bucket" "example" {
-  for_each = var.s3_buckets
-  bucket   = "${random_pet.this.id}-${each.value}"
+moved {
+  from = data.aws_iam_policy_document.assume_role
+  to = module.iam.data.aws_iam_policy_document.assume_role
 }
 
-resource "aws_s3_object" "object" {
-  for_each = var.s3_buckets
-  bucket   = aws_s3_bucket.example[each.key].id
-  key      = var.s3_base_object
+moved {
+  from = aws_iam_instance_profile.test_profile
+  to = module.iam.aws_iam_instance_profile.test_profile
 }
 
-resource "aws_security_group" "example" {
-  name = var.sg_name
+moved {
+  from = aws_iam_role.test_role
+  to = module.iam.aws_iam_role.test_role
+}
+moved {
+  from = aws_iam_user.lb[0]
+  to = module.iam.aws_iam_user.lb[0]
 }
 
-resource "aws_vpc_security_group_ingress_rule" "example" {
-  security_group_id = aws_security_group.example.id
+moved {
+  from = aws_iam_user.lb[1]
+  to = module.iam.aws_iam_user.lb[1]
+}
 
-  cidr_ipv4   = "10.0.0.0/8"
-  from_port   = 80
-  ip_protocol = "tcp"
-  to_port     = 80
+moved {
+  from = aws_iam_user.lb[2]
+  to = module.iam.aws_iam_user.lb[2]
+}
+
+moved {
+  from = aws_iam_user_policy.lb_ro[0]
+  to = module.iam.aws_iam_user_policy.lb_ro[0]
+}
+
+moved {
+  from = aws_iam_user_policy.lb_ro[1]
+  to = module.iam.aws_iam_user_policy.lb_ro[1]
+}
+
+moved {
+  from = aws_iam_user_policy.lb_ro[2]
+  to = module.iam.aws_iam_user_policy.lb_ro[2]
+}
+
+moved {
+  from = aws_instance.this
+  to = module.ec2.aws_instance.this
+}
+
+moved {
+  from = aws_s3_bucket.example["kplabs-1"]
+  to = module.s3.aws_s3_bucket.example["kplabs-1"]
+}
+
+moved {
+  from = aws_s3_object.object["kplabs-1"]
+  to = module.s3.aws_s3_object.object["kplabs-1"]
+}
+
+moved {
+  from = aws_s3_object.object["kplabs-2"]
+  to = module.s3.aws_s3_object.object["kplabs-2"]
+}
+
+moved {
+  from = random_pet.this
+  to = module.random.random_pet.this
 }

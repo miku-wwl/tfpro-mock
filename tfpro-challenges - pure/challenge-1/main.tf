@@ -75,29 +75,8 @@ resource "aws_s3_object" "object" {
   key      = var.s3_base_object
 }
 
-resource "aws_security_group" "example" {
-  name = var.sg_name
-}
-
-resource "aws_vpc_security_group_ingress_rule" "example" {
-  security_group_id = aws_security_group.example.id
-
-  cidr_ipv4   = "10.0.0.0/8"
-  from_port   = 80
-  ip_protocol = "tcp"
-  to_port     = 80
-}
-
 output "s3_buckets" {
   value = [for k,v in aws_s3_bucket.example: v.bucket]
-}
-
-output "sg_id" {
-  value = aws_security_group.example.id
-}
-
-output "sg_rule_id" {
-  value = aws_vpc_security_group_ingress_rule.example.id
 }
 
 output "user_names" {
@@ -114,7 +93,52 @@ resource "local_file" "iam" {
   content = jsonencode(aws_iam_user.lb.*.name)
 }
 
-resource "local_file" "sg" {
-  filename = "${path.module}/sg-combined.txt"
-  content = "${aws_security_group.example.id}\n${aws_vpc_security_group_ingress_rule.example.id}"
+import {
+  id = "loved-humpback-kplabs-0"
+  to = aws_iam_user.lb[0]
+}
+
+import {
+  id = "loved-humpback-kplabs-1"
+  to = aws_iam_user.lb[1]
+}
+
+import {
+  id = "loved-humpback-kplabs-2"
+  to = aws_iam_user.lb[2]
+}
+
+import {
+  id = "loved-humpback-kplabs-0:ec2-describe-policy"
+  to = aws_iam_user_policy.lb_ro[0]
+}
+
+import {
+  id = "loved-humpback-kplabs-1:ec2-describe-policy"
+  to = aws_iam_user_policy.lb_ro[1]
+}
+
+import {
+  id = "loved-humpback-kplabs-2:ec2-describe-policy"
+  to = aws_iam_user_policy.lb_ro[2]
+}
+
+import {
+  id = "loved-humpback-kplabs-1"
+  to = aws_s3_bucket.example["kplabs-1"]
+}
+
+import {
+  id = "loved-humpback-kplabs-2"
+  to = aws_s3_bucket.example["kplabs-2"]
+}
+
+import {
+  id = "loved-humpback-kplabs-1/base.txt"
+  to = aws_s3_object.object["kplabs-1"]
+}
+
+import {
+  id = "loved-humpback-kplabs-2/base.txt"
+  to = aws_s3_object.object["kplabs-2"]
 }
