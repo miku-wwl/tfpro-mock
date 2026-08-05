@@ -46,8 +46,9 @@ resource "aws_iam_user" "lb" {
 # This policy must be associated with all IAM users created through this code.
 
 resource "aws_iam_user_policy" "lb_ro" {
+  count = 3
   name = "ec2-describe-policy"
-  user = aws_iam_user.lb.name
+  user = aws_iam_user.lb[count.index].name
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -64,12 +65,12 @@ resource "aws_iam_user_policy" "lb_ro" {
 
 
 resource "aws_s3_bucket" "example" {
-  for_each = var.s3_buckets
+  for_each = toset(var.s3_buckets)
   bucket   = "${random_pet.this.id}-${each.value}"
 }
 
 resource "aws_s3_object" "object" {
-  for_each = var.s3_buckets
+  for_each = toset(var.s3_buckets)
   bucket   = aws_s3_bucket.example[each.key].id
   key      = var.s3_base_object
 }
@@ -85,4 +86,35 @@ resource "aws_vpc_security_group_ingress_rule" "example" {
   from_port   = 80
   ip_protocol = "tcp"
   to_port     = 80
+}
+
+output "s3_buckets" {
+  value = [for k,v in aws_s3_bucket.example: v.bucket]
+}
+
+output "sg_id" {
+  value = aws_security_group.example.id
+}
+
+output "sg_rule_id" {
+  value = aws_vpc_security_group_ingress_rule.example.id
+}
+
+output "user_names" {
+  value = aws_iam_user.lb.*.name
+}
+
+resource "local_file" "s3" {
+  filename = "${path.module}/s3.txt"
+  content = jsonencode([for k,v in aws_s3_bucket.example: v.bucket])  
+}
+
+resource "local_file" "iam" {
+  filename = "${path.module}/iam-users.txt"
+  content = jsonencode(aws_iam_user.lb.*.name)
+}
+
+resource "local_file" "sg" {
+  filename = "${path.module}/sg-combined.txt"
+  content = "${aws_security_group.example.id}\n${aws_vpc_security_group_ingress_rule.example.id}"
 }

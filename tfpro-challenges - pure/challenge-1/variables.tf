@@ -1,10 +1,10 @@
 
 variable "environement" {
-  type = number
+  type = string
 }
 
 variable "s3_buckets" {
-    type = list(strings)
+    type = list(string)
 }
 
 variable "s3_base_object" {}
@@ -12,3 +12,5 @@ variable "s3_base_object" {}
 variable "org-name" {}
 
 variable "region" {}
+
+variable "sg_name" {}
