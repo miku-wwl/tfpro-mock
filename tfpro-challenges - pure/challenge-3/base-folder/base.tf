@@ -3,7 +3,7 @@ terraform {
 
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "5.80.0"
     }
   }
@@ -38,7 +38,7 @@ resource "aws_iam_user" "ro_user" {
 resource "aws_iam_policy" "assume_role_policy" {
   name        = "AssumeRolePolicy"
   description = "Allows sts:AssumeRole for all IAM roles"
-  policy      = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
@@ -67,7 +67,7 @@ resource "aws_iam_access_key" "kplabs_user_key" {
 
 resource "aws_iam_access_key" "ro_user" {
   user = aws_iam_user.ro_user.name
-} 
+}
 
 resource "aws_iam_role" "ec2_full_access" {
   name = "EC2FullAccess"
@@ -135,8 +135,8 @@ resource "aws_iam_policy" "read_only_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Action = "s3:ListAllMyBuckets",
-        Effect = "Allow",
+        Action   = "s3:ListAllMyBuckets",
+        Effect   = "Allow",
         Resource = "*",
       },
       {
@@ -168,11 +168,11 @@ resource "aws_iam_role_policy_attachment" "read_only_role_policy_attachment" {
 
 
 output "ec2_fullaccess_role" {
-    value = aws_iam_role.ec2_full_access.arn
+  value = aws_iam_role.ec2_full_access.arn
 }
 
 output "iam_fullaccess_role" {
-    value = aws_iam_role.iam_full_access.arn
+  value = aws_iam_role.iam_full_access.arn
 }
 
 output "read_only_role_arn" {
